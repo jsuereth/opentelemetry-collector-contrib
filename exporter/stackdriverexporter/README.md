@@ -91,9 +91,9 @@ optimal network usage and avoiding memory overruns.  You may also want to run an
 
 # Deprecatations
 
-The previous trace configuration has been deprecated in favor of the common configuration options available in OpenTelemetry.
+The previous trace configuration (v0.21.0) has been deprecated in favor of the common configuration options available in OpenTelemetry. These will cause a failure to start
+and should be migrated:
 
-Deprecated configuration:
 - `trace.bundle_delay_threshold` (optional): Use `batch` processor instead ([docs](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor)).
 - `trace.bundle_count_threshold` (optional): Use `batch` processor instead ([docs](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor)).
 - `trace.bundle_byte_threshold` (optional): Use `memorylimiter` processor instead ([docs](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiter))
