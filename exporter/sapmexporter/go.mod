@@ -6,7 +6,7 @@ require (
 	github.com/jaegertracing/jaeger v1.26.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/splunk v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchperresourceattr v0.34.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.34.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.35.0
 	github.com/signalfx/sapm-proto v0.7.0
 	github.com/stretchr/testify v1.7.0
 	go.opentelemetry.io/collector v0.35.0
