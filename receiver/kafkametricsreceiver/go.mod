@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/Shopify/sarama v1.29.1
-	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.34.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.35.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/common v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/scraperhelper v0.34.0
 	github.com/stretchr/testify v1.7.0
