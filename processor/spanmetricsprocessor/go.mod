@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/mattn/go-colorable v0.1.7 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/jaegerexporter v0.34.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/jaegerexporter v0.35.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.34.0
 	github.com/stretchr/testify v1.7.0
