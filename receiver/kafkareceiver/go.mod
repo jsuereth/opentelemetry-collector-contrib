@@ -7,7 +7,7 @@ require (
 	github.com/apache/thrift v0.14.2
 	github.com/gogo/protobuf v1.3.2
 	github.com/jaegertracing/jaeger v1.26.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.34.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.35.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/zipkin v0.34.0
