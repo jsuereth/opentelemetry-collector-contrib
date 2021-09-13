@@ -8,7 +8,7 @@ require (
 	github.com/onsi/gomega v1.10.2 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/interval v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig v0.34.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/kubelet v0.34.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/internal/kubelet v0.35.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/opencensus v0.34.0
 	github.com/stretchr/testify v1.7.0
 	go.opentelemetry.io/collector v0.35.0
