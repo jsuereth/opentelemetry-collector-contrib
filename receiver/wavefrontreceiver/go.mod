@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/census-instrumentation/opencensus-proto v0.3.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.34.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.35.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/opencensus v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/carbonreceiver v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/collectdreceiver v0.34.0
