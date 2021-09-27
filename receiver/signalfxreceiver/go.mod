@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/gorilla/mux v1.8.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/signalfxexporter v0.34.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.34.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.36.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/splunk v0.34.0
 	github.com/signalfx/com_signalfx_metrics_protobuf v0.0.2
 	github.com/stretchr/testify v1.7.0
