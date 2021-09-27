@@ -11,7 +11,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/sapmexporter v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/signalfxexporter v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/zipkinexporter v0.34.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.34.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.36.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/splunk v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/carbonreceiver v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.34.0
