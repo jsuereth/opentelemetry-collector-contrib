@@ -7,7 +7,7 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/common v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/splunk v0.34.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchperresourceattr v0.34.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/batchperresourceattr v0.36.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/experimentalmetricmetadata v0.34.0
 	github.com/shirou/gopsutil v3.21.8+incompatible
 	github.com/signalfx/com_signalfx_metrics_protobuf v0.0.2
