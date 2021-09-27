@@ -12,9 +12,9 @@ require (
 	go.opencensus.io v0.23.0
 	go.opentelemetry.io/collector v0.35.0
 	go.opentelemetry.io/collector/model v0.35.0
-	go.opentelemetry.io/otel v1.0.0-RC3
-	go.opentelemetry.io/otel/sdk v1.0.0-RC3
-	go.opentelemetry.io/otel/trace v1.0.0-RC3
+	go.opentelemetry.io/otel v1.0.0
+	go.opentelemetry.io/otel/sdk v1.0.0
+	go.opentelemetry.io/otel/trace v1.0.0
 	google.golang.org/api v0.56.0
 	google.golang.org/genproto v0.0.0-20210828152312-66f60bf46e71
 	google.golang.org/grpc v1.40.0
