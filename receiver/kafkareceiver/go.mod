@@ -9,7 +9,7 @@ require (
 	github.com/jaegertracing/jaeger v1.26.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.34.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.34.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.36.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/zipkin v0.34.0
 	github.com/openzipkin/zipkin-go v0.2.5
 	github.com/stretchr/testify v1.7.0
