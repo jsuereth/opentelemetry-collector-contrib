@@ -6,9 +6,9 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.34.0
 	github.com/signalfx/opencensus-go-exporter-kinesis v0.6.3
 	github.com/stretchr/testify v1.7.0
-	go.opentelemetry.io/collector v0.35.0
-	go.opentelemetry.io/collector/model v0.35.0
-	go.uber.org/zap v1.19.0
+	go.opentelemetry.io/collector v0.36.0
+	go.opentelemetry.io/collector/model v0.36.0
+	go.uber.org/zap v1.19.1
 )
 
 require (
@@ -22,9 +22,9 @@ require (
 	github.com/jaegertracing/jaeger v1.26.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
-	github.com/knadh/koanf v1.2.2 // indirect
+	github.com/knadh/koanf v1.2.3 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
-	github.com/mitchellh/mapstructure v1.4.1 // indirect
+	github.com/mitchellh/mapstructure v1.4.2 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.34.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -33,6 +33,7 @@ require (
 	github.com/spf13/cast v1.4.1 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/otel v1.0.0-RC3 // indirect
+	go.opentelemetry.io/otel/metric v0.23.0 // indirect
 	go.opentelemetry.io/otel/trace v1.0.0-RC3 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
