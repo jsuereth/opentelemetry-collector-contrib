@@ -6,7 +6,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.3.0
 	github.com/onsi/ginkgo v1.14.1 // indirect
 	github.com/onsi/gomega v1.10.2 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/interval v0.34.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/internal/interval v0.36.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/kubelet v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/opencensus v0.34.0
