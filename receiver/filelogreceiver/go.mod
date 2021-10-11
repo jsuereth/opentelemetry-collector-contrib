@@ -6,7 +6,7 @@ require (
 	github.com/observiq/nanojack v0.0.0-20201106172433-343928847ebc
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/stanza v0.34.0
-	github.com/open-telemetry/opentelemetry-log-collection v0.20.0
+	github.com/open-telemetry/opentelemetry-log-collection v0.22.0
 	github.com/stretchr/testify v1.7.0
 	go.opentelemetry.io/collector v0.35.0
 	go.opentelemetry.io/collector/model v0.35.0
@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	github.com/antonmedv/expr v1.8.9 // indirect
+	github.com/antonmedv/expr v1.9.0 // indirect
 	github.com/bmatcuk/doublestar/v3 v3.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
