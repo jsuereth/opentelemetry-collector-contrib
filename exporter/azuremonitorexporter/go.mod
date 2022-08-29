@@ -6,14 +6,13 @@ require (
 	code.cloudfoundry.org/clock v1.0.0 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/microsoft/ApplicationInsights-Go v0.4.4
-	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/objx v0.4.0 // indirect
+	github.com/stretchr/testify v1.8.0
 	go.opentelemetry.io/collector v0.35.0
 	go.opentelemetry.io/collector/model v0.35.0
-	go.uber.org/zap v1.19.0
+	go.uber.org/zap v1.23.0
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.3 // indirect
 )
 
 require (
@@ -41,5 +40,5 @@ require (
 	google.golang.org/grpc v1.40.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
