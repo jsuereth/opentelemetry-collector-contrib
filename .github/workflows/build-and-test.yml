@@ -13,7 +13,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
         with:
@@ -45,7 +45,7 @@ jobs:
       loadtest_matrix: ${{ steps.splitloadtest.outputs.loadtest_matrix }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
         with:
@@ -89,7 +89,7 @@ jobs:
     needs: [setup-environment]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
         with:
@@ -129,7 +129,7 @@ jobs:
     needs: [setup-environment]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
         with:
@@ -163,7 +163,7 @@ jobs:
     needs: [setup-environment]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
         with:
@@ -198,7 +198,7 @@ jobs:
     needs: [setup-environment]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
         with:
@@ -232,7 +232,7 @@ jobs:
     needs: [setup-environment]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
         with:
@@ -274,7 +274,7 @@ jobs:
       matrix: ${{ fromJson(needs.setup-environment.outputs.stabilitytest_matrix) }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
         with:
@@ -309,7 +309,7 @@ jobs:
     needs: [setup-environment]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Build Examples
         run: make build-examples
 
@@ -325,7 +325,7 @@ jobs:
           - windows_amd64
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
         with:
@@ -359,7 +359,7 @@ jobs:
       matrix: ${{ fromJson(needs.setup-environment.outputs.loadtest_matrix) }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Cache Tools
         id: tool-cache
         uses: actions/cache@v2
@@ -430,7 +430,7 @@ jobs:
         package_type: ["deb", "rpm"]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
         with:
           fetch-depth: 0
       - name: Install Ruby
@@ -469,7 +469,7 @@ jobs:
     needs: [cross-compile]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
         with:
           fetch-depth: 0
       - name: Download Binaries
@@ -507,7 +507,7 @@ jobs:
     needs: [build-package, windows-msi]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Download Binaries
         uses: actions/download-artifact@v2
         with:
@@ -529,7 +529,7 @@ jobs:
     if: ${{ false }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
         with:
@@ -588,7 +588,7 @@ jobs:
     if: ${{ false }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
       - name: Setup Go
         uses: actions/setup-go@v2.1.4
         with:
