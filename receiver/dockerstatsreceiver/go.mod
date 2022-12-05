@@ -7,17 +7,17 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/common v0.34.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/interval v0.34.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	go.opentelemetry.io/collector v0.35.0
 	go.opentelemetry.io/collector/model v0.35.0
-	go.uber.org/zap v1.19.0
+	go.uber.org/zap v1.24.0
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.3 // indirect
 )
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Microsoft/go-winio v0.4.16 // indirect
+	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/containerd/containerd v1.4.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -50,7 +50,7 @@ require (
 	google.golang.org/grpc v1.40.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace (
