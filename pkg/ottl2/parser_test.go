@@ -5,13 +5,15 @@ package ottl2 // import "github.com/open-telemetry/opentelemetry-collector-contr
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func testParser() Parser {
-	return Parser{}
+	return NewParser(NewParserEnvironemnt([]string{}, map[string]types.Function{}))
 }
 
 func TestParser_literals(t *testing.T) {
@@ -77,28 +79,166 @@ func TestParser_literals(t *testing.T) {
 	}
 }
 
-// func TestParser_mathExpressions(t *testing.T) {
-// 	tests := []struct {
-// 		name     string
-// 		input    string
-// 		expected any
-// 	}{
-// 		{
-// 			name:     "addition",
-// 			input:    "1.0+2",
-// 			expected: 3,
-// 		},
-// 	}
-// 	p := testParser()
-// 	ctx := context.Background()
-// 	env := newEnv()
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			expr, err := p.ParseValueString(tt.input)
-// 			assert.Nil(t, err)
-// 			result, err := expr.Eval(ctx, env)
-// 			assert.Nil(t, err)
-// 			assert.Equal(t, tt.expected, result)
-// 		})
-// 	}
-// }
+func TestParser_mathExpressions(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected any
+	}{
+		{
+			name:     "addition",
+			input:    "1 + 2",
+			expected: (int64)(3),
+		},
+		{
+			name:     "subtraction",
+			input:    "2 - 1",
+			expected: (int64)(1),
+		},
+	}
+	p := testParser()
+	ctx := context.Background()
+	env := newEnv()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := p.ParseValueString(tt.input)
+			assert.Nil(t, err)
+			result := expr.Eval(ctx, env).Value()
+			assert.Nil(t, err)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+type testStruct struct {
+	value string
+}
+
+func (t *testStruct) Value() any {
+	return *t
+}
+
+func (t *testStruct) ConvertTo(typeDesc reflect.Type) (any, error) {
+	panic("unimplemented")
+}
+
+func (t *testStruct) GetField(field string) types.Val {
+	return types.NewStringVal(t.value)
+}
+
+func newTestStruct(value string) types.Val {
+	return &testStruct{value}
+}
+
+func newTestEnv(cfg func(*TransformEnvironment)) *EvalContext {
+	result := NewEvalContext()
+	cfg(&result)
+	var ctx EvalContext = result
+	return &ctx
+}
+func newTestParserEnv(cfg func() ParserEnvironment) *ParserContext {
+	result := cfg()
+	var ctx ParserContext = result
+	return &ctx
+}
+
+func TestParser_environment(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected any
+		penv     *ParserContext
+		env      *EvalContext
+	}{
+		{
+			name:     "field",
+			input:    "some.value",
+			expected: "result",
+			penv: newTestParserEnv(func() ParserEnvironment {
+				return NewParserEnvironemnt(
+					[]string{"some"},
+					map[string]types.Function{},
+				)
+			}),
+			env: newTestEnv(func(te *TransformEnvironment) {
+				te.WithVariable("some", newTestStruct("result"))
+			}),
+		},
+		{
+			name:     "index",
+			input:    "list[1]",
+			expected: "two",
+			penv: newTestParserEnv(func() ParserEnvironment {
+				return NewParserEnvironemnt(
+					[]string{"list"},
+					map[string]types.Function{},
+				)
+			}),
+			env: newTestEnv(func(te *TransformEnvironment) {
+				te.WithVariable("list", types.NewListVal([]types.Val{
+					types.NewStringVal("one"), types.NewStringVal("two"),
+				}))
+			}),
+		},
+		{
+			name:     "key",
+			input:    "dict[\"hi\"]",
+			expected: "one",
+			penv: newTestParserEnv(func() ParserEnvironment {
+				return NewParserEnvironemnt(
+					[]string{"dict"},
+					map[string]types.Function{},
+				)
+			}),
+			env: newTestEnv(func(te *TransformEnvironment) {
+				te.WithVariable("dict", types.NewMapVal(map[string]types.Val{
+					"hi":  types.NewStringVal("one"),
+					"bye": types.NewStringVal("two"),
+				}))
+			}),
+		},
+		{
+			name:     "editor",
+			input:    "doSomething(test)",
+			expected: "test",
+			penv: newTestParserEnv(func() ParserEnvironment {
+				return NewParserEnvironemnt(
+					[]string{"test"},
+					map[string]types.Function{
+						"doSomething": types.NewRawFunc(func(v []types.Val) (types.Val, error) {
+							return v[0], nil
+						}),
+					},
+				)
+			}),
+			env: newTestEnv(func(te *TransformEnvironment) {
+				te.WithVariable("test", types.NewStringVal("test"))
+			}),
+		},
+	}
+	ctx := context.Background()
+	var p Parser
+	var env EvalContext
+	for _, tt := range tests {
+		if tt.penv != nil {
+			p = NewParser(*tt.penv)
+		} else {
+			p = NewParser(NewParserEnvironemnt(
+				[]string{},
+				map[string]types.Function{},
+			))
+		}
+		if tt.env != nil {
+			env = *tt.env
+		} else {
+			env = newEnv()
+		}
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := p.ParseValueString(tt.input)
+			assert.Nil(t, err)
+			result := expr.Eval(ctx, env).Value()
+			assert.Nil(t, err)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

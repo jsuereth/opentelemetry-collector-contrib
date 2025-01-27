@@ -10,20 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type testEvalContext struct{}
-
-// Parent implements EvalContext.
-func (t *testEvalContext) Parent() EvalContext {
-	panic("unimplemented")
-}
-
-// ResolveName implements EvalContext.
-func (t *testEvalContext) ResolveName(name string) (any, bool) {
-	panic("unimplemented")
-}
-
 func newEnv() EvalContext {
-	return &testEvalContext{}
+	return NewEvalContext()
 }
 
 type testDef interface {
@@ -100,6 +88,24 @@ func TestExpr_literals(t *testing.T) {
 				"two": IntExpr(2),
 			}),
 			expected: map[string]any{"one": (int64)(1), "two": (int64)(2)},
+		},
+	}
+	for _, tt := range tests {
+		tt.RunTest(t)
+	}
+}
+
+func TestExpr_math(t *testing.T) {
+	tests := []testDef{
+		&exprTest{
+			name:     "add ints",
+			expr:     AddExpr(IntExpr(1), IntExpr(2)),
+			expected: (int64)(3),
+		},
+		&exprTest{
+			name:     "add floats",
+			expr:     AddExpr(FloatExpr(1), FloatExpr(2)),
+			expected: (float64)(3),
 		},
 	}
 	for _, tt := range tests {
