@@ -17,6 +17,9 @@ import (
 type Interpretable interface {
 	// Eval an Activation to produce an output.
 	Eval(ctx context.Context, ec EvalContext) types.Val
+	// TODO - decide of we can isolate this.
+	// Disallow implementations outside this package.
+	// unexportedFactoryFunc()
 }
 
 // Type contianing literal expression
