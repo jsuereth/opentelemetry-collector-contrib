@@ -29,9 +29,10 @@ Here's an example using a custom context:
 env := NewTransformContext[MyContext](
   MyContextType, 
   func(v testContext) types.Val { return &v },
-  WithFunction("IsEmpty", IsEmptyFunc()),
+  WithFunction[MyContext]("IsEmpty", IsEmptyFunc()),
+  WithFunction[MyContext]("route", RouteFunc()),
 )
-stmt, err := ParseStatement(env, "1 where IsEmpty(name)")
+stmt, err := ParseStatement(env, "route() where IsEmpty(name)")
 // ... error handling ...
 result, cond, err := stmt.Execute(context.Background(), MyContext { name: "test"})
 // result: nil
@@ -74,6 +75,10 @@ func (m *MyContext) Value() any {
   return m
 }
 ```
+
+### Adding new functions
+
+WIP
 
 ### Adding new types
 
