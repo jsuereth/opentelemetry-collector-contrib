@@ -5,7 +5,15 @@ package types // import "github.com/open-telemetry/opentelemetry-collector-contr
 
 import "reflect"
 
+// TODO - we should use type constructor type here.
+var MapType = NewPrimitiveType("map")
+
 type mapVal[V Val] map[string]V
+
+// Type implements Val.
+func (m mapVal[V]) Type() Type {
+	return MapType
+}
 
 // ConvertTo implements Val.
 func (m mapVal[V]) ConvertTo(typeDesc reflect.Type) (any, error) {

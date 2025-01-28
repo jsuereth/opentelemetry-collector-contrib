@@ -7,11 +7,12 @@ import (
 	"fmt"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
-) // Environment used to parse ASTs
+)
 
+// Environment used to parse ASTs
 type EvalContext interface {
 	// ResolveName returns a value from the context by qualified name, or false if the name
-	// could not be found.
+	// could not be structund.
 	ResolveName(name string) (types.Val, bool)
 
 	// Parent returns the parent of the current activation, may be nil.
@@ -55,7 +56,7 @@ func (te TransformEnvironment) ResolveName(name string) (types.Val, bool) {
 // Context we need when evaluating parsed ASTs before turning them into Interpretable.
 type ParserContext interface {
 	// Returns true if the given name exists in the current context.
-	HasName(name string) bool
+	ResolveName(name string) (types.Type, bool)
 
 	// ResolveFunction returns a function form context by qualified name, or false if the name
 	// could not be found.
@@ -65,31 +66,31 @@ type ParserContext interface {
 	ResolveEnum(name string) (types.Val, bool)
 }
 
+type EnumDefinition map[string]types.Val
+
 type ParserEnvironment struct {
-	variableNames []string
-	functions     map[string]types.Function
+	variables map[string]types.Type
+	functions map[string]types.Function
+	enums     []EnumDefinition
 }
 
 func (pe ParserEnvironment) String() string {
-	return fmt.Sprintf("Env{variabless: %v, functions: %v}", pe.variableNames, pe.functions)
+	return fmt.Sprintf("Env{variables: %v, functions: %v}", pe.variables, pe.functions)
 }
 
 func NewParserEnvironemnt(
-	variableNames []string,
+	variables map[string]types.Type,
 	functions map[string]types.Function) ParserEnvironment {
 	return ParserEnvironment{
-		variableNames,
+		variables,
 		functions,
+		[]EnumDefinition{},
 	}
 }
 
-func (p ParserEnvironment) HasName(name string) bool {
-	for _, n := range p.variableNames {
-		if n == name {
-			return true
-		}
-	}
-	return false
+func (p ParserEnvironment) ResolveName(name string) (types.Type, bool) {
+	t, ok := p.variables[name]
+	return t, ok
 }
 
 func (p ParserEnvironment) ResolveFunction(name string) (types.Function, bool) {
@@ -98,5 +99,12 @@ func (p ParserEnvironment) ResolveFunction(name string) (types.Function, bool) {
 }
 
 func (p ParserEnvironment) ResolveEnum(name string) (types.Val, bool) {
+	for _, es := range p.enums {
+		for k, v := range es {
+			if k == name {
+				return v, true
+			}
+		}
+	}
 	return types.NewErrorVal(fmt.Errorf("no such enum: %s", name)), false
 }

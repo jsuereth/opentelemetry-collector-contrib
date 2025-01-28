@@ -15,6 +15,8 @@ The OTTL package is split into several layers, some of which are internal only:
   - Includes the `Val` and `Var` interfaces, for defining context.
   - See [types](types/README.md) package
 
+### Entry Points
+
 All of this is wrapped in a few "starter" points for using OTTL.
 
 - `ParseStatement()`: This parses an OTTL statement and returns a `Statement[R]`.
@@ -32,5 +34,14 @@ result, err := stmt.Execute(context.Background(), ctx)
 // ... error handling ...
 ```
 
+### Creating Custom Context
 
-Note: Creating context to simplify parsing statements and executing them is WIP.
+WIP
+
+### Adding new types
+
+WIP
+
+### Expanding the language
+
+WIP

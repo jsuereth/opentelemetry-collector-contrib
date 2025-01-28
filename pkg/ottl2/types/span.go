@@ -10,7 +10,21 @@ import (
 	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
+var SpanType = NewStructureType("span", map[string]Type{
+	"name":                     StringType,
+	"start_time_unix_nano":     IntType,
+	"end_time_unix_nano":       IntType,
+	"dropped_attributes_count": IntType,
+	"dropped_events_count":     IntType,
+	"dropped_links_count":      IntType,
+})
+
 type spanVal ptrace.Span
+
+// Type implements Val.
+func (s spanVal) Type() Type {
+	return SpanType
+}
 
 func (s spanVal) ConvertTo(typeDesc reflect.Type) (any, error) {
 	return nil, fmt.Errorf("not implemented for span")
@@ -30,6 +44,7 @@ func (s spanVal) GetField(field string) Val {
 	case "parent_span_id":
 	case "name":
 		return NewGetterSetterVar(
+			StringType,
 			func() Val {
 				return NewStringVal(ptrace.Span(s).Name())
 			},

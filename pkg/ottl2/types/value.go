@@ -15,6 +15,9 @@ type Val interface {
 	// Equal returns true if the `other` value has the same type and content as the implementing struct.
 	// Equal(other Val) Val
 
+	// The type of this Val.
+	Type() Type
+
 	// Value returns the raw value of the instance which may not be directly compatible with the expression
 	// language types.
 	Value() any
@@ -30,6 +33,7 @@ type Var interface {
 type Getter = func() Val
 type Setter = func(Val) error
 type getterSetterVar struct {
+	tpe    Type
 	getter Getter
 	setter Setter
 }
@@ -44,11 +48,14 @@ func (g getterSetterVar) SetValue(v Val) error {
 	return g.setter(v)
 }
 
-// Value implements Var.
+func (g getterSetterVar) Type() Type {
+	return g.tpe
+}
+
 func (g getterSetterVar) Value() any {
 	return g.getter().Value()
 }
 
-func NewGetterSetterVar(getter Getter, setter Setter) Var {
-	return getterSetterVar{getter, setter}
+func NewGetterSetterVar(tpe Type, getter Getter, setter Setter) Var {
+	return getterSetterVar{tpe, getter, setter}
 }

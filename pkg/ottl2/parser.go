@@ -6,6 +6,7 @@ package ottl2 // import "github.com/open-telemetry/opentelemetry-collector-contr
 import (
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/alecthomas/participle/v2"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
@@ -15,6 +16,7 @@ type Parser struct {
 	env ParserContext
 }
 
+// TODO - don't expose this publicly, only expose Statement?
 func NewParser(env ParserContext) Parser {
 	return Parser{
 		env,
@@ -133,23 +135,36 @@ func (p *Parser) parseArgument(a argument) (Interpretable, error) {
 }
 
 func (p *Parser) parsePath(e path) (Interpretable, error) {
-	// So we MAY have context, or we MAY just have a field...
+	// So we MAY have context, or we MAY just have a field.
+	// We likely want to attach return types to Interpretable at some point.
 	var result Interpretable = nil
+	var currentType types.Type = types.NilType
 	if e.Context != "" {
-		if !p.env.HasName(e.Context) {
+		t, ok := p.env.ResolveName(e.Context)
+		if !ok {
 			return NilExpr(), fmt.Errorf("invalid name: %s", e.Context)
 		}
+		currentType = t
 		result = LookupExpr(e.Context)
 	}
 	for _, field := range e.Fields {
 		if field.Name != "" {
-			// Once we have types, verify this field exists on the type if we're able.
 			if result == nil {
-				if !p.env.HasName(field.Name) {
+				t, ok := p.env.ResolveName(field.Name)
+				if !ok {
 					return NilExpr(), fmt.Errorf("invalid name: %s", field.Name)
 				}
+				currentType = t
 				result = LookupExpr(field.Name)
 			} else {
+				if !reflect.TypeOf(currentType).Implements(reflect.TypeFor[types.StructType]()) {
+					return NilExpr(), fmt.Errorf("type %s has no fields, cannot find: %s", currentType.Name(), field.Name)
+				}
+				t, ok := currentType.(types.StructType).GetField(field.Name)
+				if !ok {
+					return NilExpr(), fmt.Errorf("type %s has no field named: %s", currentType.Name(), field.Name)
+				}
+				currentType = t
 				result = AccessExpr(result, field.Name)
 			}
 		}

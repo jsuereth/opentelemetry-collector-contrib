@@ -5,7 +5,15 @@ package types // import "github.com/open-telemetry/opentelemetry-collector-contr
 
 import "reflect"
 
+// TODO - we should use type-constructor type for lists.
+var ListType = NewPrimitiveType("list")
+
 type listVal[T Val] []T
+
+// Type implements Val.
+func (i listVal[T]) Type() Type {
+	return ListType
+}
 
 func (i listVal[T]) ConvertTo(typeDesc reflect.Type) (any, error) {
 	panic("unimplemented")

@@ -5,8 +5,21 @@ package types // import "github.com/open-telemetry/opentelemetry-collector-contr
 
 import "reflect" // Allows errors returned from evaluating expressions
 
+type errorType struct{}
+
+func (e errorType) Name() string {
+	return "error"
+}
+
+var ErrorType Type = errorType{}
+
 type errorVal struct {
 	e error
+}
+
+// Type implements Val.
+func (e errorVal) Type() Type {
+	return ErrorType
 }
 
 func (e errorVal) ConvertTo(typeDesc reflect.Type) (any, error) {

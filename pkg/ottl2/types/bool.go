@@ -8,7 +8,14 @@ import (
 	"reflect" // Stores literal boolean values
 )
 
+var BoolType = NewPrimitiveType("bool")
+
 type boolVal bool
+
+// Type implements Val.
+func (b boolVal) Type() Type {
+	return BoolType
+}
 
 // How we coeerce between known types in OTLP.
 func (b boolVal) ConvertTo(typeDesc reflect.Type) (any, error) {

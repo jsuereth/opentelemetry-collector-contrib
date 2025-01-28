@@ -8,7 +8,15 @@ import (
 	"reflect"
 )
 
+// TODO - Nil should be a special type.
+var NilType = NewPrimitiveType("nil")
+
 type nilVal struct{}
+
+// Type implements Val.
+func (n *nilVal) Type() Type {
+	return NilType
+}
 
 // ConvertTo implements Val.
 func (n *nilVal) ConvertTo(typeDesc reflect.Type) (any, error) {

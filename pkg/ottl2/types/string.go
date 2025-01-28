@@ -8,7 +8,14 @@ import (
 	"reflect"
 )
 
+var StringType = NewPrimitiveType("string")
+
 type stringVal string
+
+// Type implements Val.
+func (s stringVal) Type() Type {
+	return StringType
+}
 
 // Cast strings to valid other types.
 func (s stringVal) ConvertTo(typeDesc reflect.Type) (any, error) {

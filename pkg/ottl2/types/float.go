@@ -8,7 +8,14 @@ import (
 	"reflect"
 )
 
+var FloatType = NewPrimitiveType("float")
+
 type float64Val float64
+
+// Type implements Val.
+func (f float64Val) Type() Type {
+	return FloatType
+}
 
 // ConvertTo implements Val.
 func (f float64Val) ConvertTo(typeDesc reflect.Type) (any, error) {

@@ -13,7 +13,7 @@ import (
 )
 
 func testParser() Parser {
-	return NewParser(NewParserEnvironemnt([]string{}, map[string]types.Function{}))
+	return NewParser(NewParserEnvironemnt(map[string]types.Type{}, map[string]types.Function{}))
 }
 
 func TestParser_literals(t *testing.T) {
@@ -110,8 +110,19 @@ func TestParser_mathExpressions(t *testing.T) {
 	}
 }
 
+var testStructType = types.NewStructureType(
+	"testStruct",
+	map[string]types.Type{
+		"value": types.StringType,
+	},
+)
+
 type testStruct struct {
 	value string
+}
+
+func (t *testStruct) Type() types.Type {
+	return testStructType
 }
 
 func (t *testStruct) Value() any {
@@ -156,7 +167,9 @@ func TestParser_environment(t *testing.T) {
 			expected: "result",
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					[]string{"some"},
+					map[string]types.Type{"some": types.NewStructureType("custom", map[string]types.Type{
+						"value": types.StringType,
+					})},
 					map[string]types.Function{},
 				)
 			}),
@@ -170,7 +183,7 @@ func TestParser_environment(t *testing.T) {
 			expected: "two",
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					[]string{"list"},
+					map[string]types.Type{"list": types.ListType},
 					map[string]types.Function{},
 				)
 			}),
@@ -186,7 +199,7 @@ func TestParser_environment(t *testing.T) {
 			expected: "one",
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					[]string{"dict"},
+					map[string]types.Type{"dict": types.MapType},
 					map[string]types.Function{},
 				)
 			}),
@@ -203,7 +216,7 @@ func TestParser_environment(t *testing.T) {
 			expected: "test",
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					[]string{"test"},
+					map[string]types.Type{"test": types.StringType},
 					map[string]types.Function{
 						"doSomething": types.NewRawFunc(func(v []types.Val) (types.Val, error) {
 							return v[0], nil
@@ -224,7 +237,7 @@ func TestParser_environment(t *testing.T) {
 			p = NewParser(*tt.penv)
 		} else {
 			p = NewParser(NewParserEnvironemnt(
-				[]string{},
+				map[string]types.Type{},
 				map[string]types.Function{},
 			))
 		}
@@ -235,7 +248,7 @@ func TestParser_environment(t *testing.T) {
 		}
 		t.Run(tt.name, func(t *testing.T) {
 			expr, err := p.ParseValueString(tt.input)
-			assert.Nil(t, err)
+			assert.Nil(t, err, "Failed to parse: %s, error: %v, parser: %v", tt.input, err, p)
 			result := expr.Eval(ctx, env).Value()
 			assert.Nil(t, err)
 			assert.Equal(t, tt.expected, result)
@@ -305,7 +318,7 @@ func TestParser_conditions(t *testing.T) {
 			p = NewParser(*tt.penv)
 		} else {
 			p = NewParser(NewParserEnvironemnt(
-				[]string{},
+				map[string]types.Type{},
 				map[string]types.Function{},
 			))
 		}

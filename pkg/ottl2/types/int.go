@@ -8,7 +8,14 @@ import (
 	"reflect"
 )
 
+var IntType = NewPrimitiveType("int")
+
 type int64Val int64
+
+// Type implements Val.
+func (i int64Val) Type() Type {
+	return IntType
+}
 
 func (i int64Val) Value() any {
 	return (int64)(i)

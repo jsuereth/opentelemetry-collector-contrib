@@ -5,6 +5,7 @@ package ottl2 // import "github.com/open-telemetry/opentelemetry-collector-contr
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"go.opentelemetry.io/collector/component"
@@ -22,12 +23,21 @@ type Statement[K any] struct {
 	telemetrySettings component.TelemetrySettings
 }
 
+func (s Statement[K]) String() string {
+	return fmt.Sprintf("ottl[%s]", s.origText)
+}
+
+// Helper to access logger so we can shift it to different input later.
+func (s Statement[K]) logger() *zap.Logger {
+	return s.telemetrySettings.Logger
+}
+
 func (s Statement[K]) Execute(ctx context.Context, env K) (any, bool, error) {
 	realEnv := s.ctx.NewEvalContext(env)
 	condition, err := s.condition.Eval(ctx, realEnv).ConvertTo(reflect.TypeFor[bool]())
 	defer func() {
-		if s.telemetrySettings.Logger != nil {
-			s.telemetrySettings.Logger.Debug("TransformContext after statement execution", zap.String("statement", s.origText), zap.Bool("condition matched", condition.(bool)), zap.Any("TransformContext", env))
+		if s.logger() != nil {
+			s.logger().Debug("TransformContext after statement execution", zap.String("statement", s.origText), zap.Bool("condition matched", condition.(bool)), zap.Any("TransformContext", env))
 		}
 	}()
 	if err != nil {
