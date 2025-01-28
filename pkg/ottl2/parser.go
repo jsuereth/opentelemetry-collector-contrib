@@ -8,6 +8,9 @@ import (
 	"fmt"
 
 	"github.com/alecthomas/participle/v2"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/traits"
+	"go.opentelemetry.io/collector/component"
 ) // Parser is responsible for converting an OTTL expression string into an Expr.
 type Parser struct {
 	env ParserContext
@@ -19,13 +22,54 @@ func NewParser(env ParserContext) Parser {
 	}
 }
 
-// // Parses a value expression
+// TODO - Simplify this entry point.
+func ParseStatement[E EvalContext](statement string, env ParserContext) (Statement[E], error) {
+	p := NewParser(env)
+	parsed, err := parseRawStatement(statement)
+	if err != nil {
+		return Statement[E]{}, err
+	}
+	condition, expr, err := p.parseStatement(*parsed)
+	if err != nil {
+		return Statement[E]{}, err
+	}
+	return Statement[E]{
+		function:          expr,
+		condition:         condition,
+		origText:          statement,
+		telemetrySettings: component.TelemetrySettings{}, // TODO - telemetry settings
+	}, nil
+}
+
+// Parses a statement into a Condition and an Expression.
+func (p *Parser) parseStatement(s parsedStatement) (Interpretable, Interpretable, error) {
+	condition, err := p.parseBooleanExpression(*s.WhereClause)
+	if err != nil {
+		return nil, nil, err
+	}
+	action, err := p.parseEditor(s.Editor)
+	if err != nil {
+		return nil, nil, err
+	}
+	return condition, action, nil
+}
+
+// For testing.
 func (p *Parser) ParseValueString(raw string) (Interpretable, error) {
 	parsed, err := valueExpressionParser.ParseString("", raw)
 	if err != nil {
 		return NilExpr(), err
 	}
 	return p.parseValue(*parsed)
+}
+
+// For testing.
+func (p *Parser) ParseConditionString(raw string) (Interpretable, error) {
+	parsed, err := conditionParser.ParseString("", raw)
+	if err != nil {
+		return NilExpr(), err
+	}
+	return p.parseBooleanExpression(*parsed)
 }
 
 func (p *Parser) parseValue(v value) (Interpretable, error) {
@@ -57,45 +101,59 @@ func (p *Parser) parseValue(v value) (Interpretable, error) {
 	}
 }
 func (p *Parser) parseEnum(e enumSymbol) (Interpretable, error) {
-	// TODO - use provided enumerations in context.
-	panic("Enums not supported")
+	value, ok := p.env.ResolveEnum(string(e))
+	if !ok {
+		return NilExpr(), fmt.Errorf("no such enum: %s", e)
+	}
+	return ValExpr(value), nil
 }
 
 func (p *Parser) parseEditor(e editor) (Interpretable, error) {
 	// There are two options for arguments - by name or by position.
 	// We currently don't handle by posiiton.
 	if f, ok := p.env.ResolveFunction(e.Function); ok {
-		args, err := p.parseArguments(e.Arguments)
+		pa, na, err := p.parseArguments(e.Arguments)
 		if err != nil {
 			return NilExpr(), err
 		}
-		return FuncCallExpr(f, args), nil
+		// TODO - we should use type system to erase named args to positional.
+		return FuncCallExpr(f, pa, na), nil
 	}
 	return NilExpr(), fmt.Errorf("could not find function: %s in %v", e.Function, p.env)
 }
 
-func (p *Parser) parseArguments(a []argument) ([]Interpretable, error) {
-	result := make([]Interpretable, len(a))
-	for i, v := range a {
+func (p *Parser) parseArguments(a []argument) ([]Interpretable, map[string]Interpretable, error) {
+	positional := []Interpretable{}
+	named := map[string]Interpretable{}
+	seenNamed := false
+	for _, v := range a {
 		next, err := p.parseArgument(v)
 		if err != nil {
-			return []Interpretable{}, err
+			return nil, nil, err
 		}
-		result[i] = next
+		if seenNamed && v.Name != "" {
+			return nil, nil, errors.New("unnamed argument used after named argument")
+		}
+		if v.Name != "" {
+			seenNamed = true
+			named[v.Name] = next
+		} else {
+			positional = append(positional, next)
+		}
 	}
-	return result, nil
+	return positional, named, nil
 }
 
 func (p *Parser) parseArgument(a argument) (Interpretable, error) {
-	if a.Name != "" || a.FunctionName != nil {
-		panic(fmt.Sprintf("named arguments unsupported, found %v", a))
+	// Example for function name: replace_pattern(attributes["message"], Sha256)
+	if a.FunctionName != nil {
+		panic(fmt.Sprintf("function name arguments unsupported, found %v", a))
 	}
 	return p.parseValue(a.Value)
 }
 
 func (p *Parser) parsePath(e path) (Interpretable, error) {
 	// So we MAY have context, or we MAY just have a field...
-	// TODO - Verify the path exists via types, if we can.
 	var result Interpretable = nil
 	if e.Context != "" {
 		if !p.env.HasName(e.Context) {
@@ -105,6 +163,7 @@ func (p *Parser) parsePath(e path) (Interpretable, error) {
 	}
 	for _, field := range e.Fields {
 		if field.Name != "" {
+			// Once we have types, verify this field exists on the type if we're able.
 			if result == nil {
 				if !p.env.HasName(field.Name) {
 					return NilExpr(), fmt.Errorf("invalid name: %s", field.Name)
@@ -163,7 +222,6 @@ func (p *Parser) parseAddSubterm(e addSubTerm) (Interpretable, error) {
 	return result, nil
 }
 
-// TODO _ maybe convert these into function calls against "Add", "Mult" etc. functions.
 func mathOpExpr(op mathOp, lhs Interpretable, rhs Interpretable) Interpretable {
 	switch op {
 	case add:
@@ -175,7 +233,7 @@ func mathOpExpr(op mathOp, lhs Interpretable, rhs Interpretable) Interpretable {
 	case div:
 		return DivExpr(lhs, rhs)
 	}
-	panic("Unknown math operation")
+	panic(fmt.Sprintf("unknown math operation: %s", op.String()))
 }
 
 func (p *Parser) parseMathVaue(e mathValue) (Interpretable, error) {
@@ -236,26 +294,134 @@ func (p *Parser) parseValues(vs []value) ([]Interpretable, error) {
 	return result, nil
 }
 
-// // converts a constExpr AST to an evaluatable Expr.
-// func (p *Parser) parseConstExpr(ce constExpr) (Interpretable, error) {
-// 	switch {
-// 	case ce.Boolean != nil:
-// 		if *ce.Boolean {
-// 			return trueExpr(), nil
-// 		} else {
-// 			return falseExpr(), nil
-// 		}
-// 	case ce.Converter != nil:
-// 		return p.parseConvertor(*ce.Converter)
-// 	default:
-// 		return NilExpr(), fmt.Errorf("unhandled boolean operation %v", ce)
-// 	}
-// }
+func (p *Parser) parseBooleanExpression(be booleanExpression) (Interpretable, error) {
+	// Expressions are or'd here?
+	// Previous impelmentation assumed only ors were allowed.
+	result, err := p.parseTerm(*be.Left)
+	if err != nil {
+		return NilExpr(), err
+	}
+	for _, v := range be.Right {
+		rhs, err := p.parseTerm(*v.Term)
+		if err != nil {
+			return NilExpr(), err
+		}
+		result = newBoolOperatorExpr(v.Operator, result, rhs)
+	}
+	return result, nil
+}
+
+func (p *Parser) parseTerm(t term) (Interpretable, error) {
+	// Expressions are and'd here?
+	result, err := p.parseBooleanValue(*t.Left)
+	if err != nil {
+		return NilExpr(), err
+	}
+	for _, v := range t.Right {
+		rhs, err := p.parseBooleanValue(*v.Value)
+		if err != nil {
+			return NilExpr(), err
+		}
+		result = newBoolOperatorExpr(v.Operator, result, rhs)
+	}
+	return result, nil
+}
+
+func (p *Parser) parseBooleanValue(v booleanValue) (Interpretable, error) {
+	var r Interpretable
+	var err error
+	switch {
+	case v.Comparison != nil:
+		r, err = p.parseComparison(*v.Comparison)
+	case v.ConstExpr != nil:
+		r, err = p.parseConstExpr(*v.ConstExpr)
+	case v.SubExpr != nil:
+		r, err = p.parseBooleanExpression(*v.SubExpr)
+	}
+	if v.Negation != nil {
+		r = NotExpr(r)
+	}
+	return r, err
+}
+
+func newBoolOperatorExpr(op string, lhs Interpretable, rhs Interpretable) Interpretable {
+	switch op {
+	case "and":
+		return AndExpr(lhs, rhs)
+	case "or":
+		return OrExpr(lhs, rhs)
+	}
+	panic(fmt.Sprintf("unknown boolean operator: %s", op))
+}
+
+func (p *Parser) parseComparison(ce comparison) (Interpretable, error) {
+	lhs, err := p.parseValue(ce.Left)
+	if err != nil {
+		return NilExpr(), err
+	}
+	rhs, err := p.parseValue(ce.Right)
+	if err != nil {
+		return NilExpr(), err
+	}
+	// We should benchmark and update these to be more "inlinable", if needed.
+	switch ce.Op {
+	case eq:
+		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+			result := l.(traits.Comparable).Equals(r)
+			return types.NewBoolVal(result)
+		}), nil
+	case ne:
+		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+			result := !l.(traits.Comparable).Equals(r)
+			return types.NewBoolVal(result)
+		}), nil
+	case lt:
+		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+			result := l.(traits.Comparable).LessThan(r)
+			return types.NewBoolVal(result)
+		}), nil
+	case lte:
+		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+			result := l.(traits.Comparable).LessThan(r) || l.(traits.Comparable).Equals(r)
+			return types.NewBoolVal(result)
+		}), nil
+	case gte:
+		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+			result := !l.(traits.Comparable).LessThan(r)
+			return types.NewBoolVal(result)
+		}), nil
+	case gt:
+		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+			result := !(l.(traits.Comparable).LessThan(r) || l.(traits.Comparable).Equals(r))
+			return types.NewBoolVal(result)
+		}), nil
+	}
+	return NilExpr(), fmt.Errorf("unknown comparison: %v", ce)
+}
+
+func (p *Parser) parseConstExpr(ce constExpr) (Interpretable, error) {
+	switch {
+	case ce.Boolean != nil:
+		if *ce.Boolean {
+			return BooleanExpr(true), nil
+		} else {
+			return BooleanExpr(false), nil
+		}
+	case ce.Converter != nil:
+		return p.parseConvertor(*ce.Converter)
+	default:
+		return NilExpr(), fmt.Errorf("unhandled boolean operation %v", ce)
+	}
+}
 
 func (p *Parser) parseConvertor(c converter) (Interpretable, error) {
-	// TODO - these operate wierdly in OTTL, using some Getter/Setter abstraction
-	// We need to re-implement.
-	return NilExpr(), errors.ErrUnsupported
+	// This is what previous parser did.  This requires that convertors
+	// and editors share the same relevant field names.
+	result, err := p.parseEditor(editor(c))
+	if err != nil {
+		return NilExpr(), err
+	}
+	return result, err
 }
 
 var (
@@ -278,4 +444,43 @@ func newParser[G any]() *participle.Parser[G] {
 		panic("Unable to initialize parser; this is a programming error in OTTL:" + err.Error())
 	}
 	return parser
+}
+
+func parseRawStatement(raw string) (*parsedStatement, error) {
+	parsed, err := statementParser.ParseString("", raw)
+	if err != nil {
+		return nil, fmt.Errorf("statement has invalid syntax: %w", err)
+	}
+	err = parsed.checkForCustomError()
+	if err != nil {
+		return nil, err
+	}
+
+	return parsed, nil
+}
+
+func parseRawCondition(raw string) (*booleanExpression, error) {
+	parsed, err := conditionParser.ParseString("", raw)
+	if err != nil {
+		return nil, fmt.Errorf("condition has invalid syntax: %w", err)
+	}
+	err = parsed.checkForCustomError()
+	if err != nil {
+		return nil, err
+	}
+
+	return parsed, nil
+}
+
+func parseRawValue(raw string) (*value, error) {
+	parsed, err := valueExpressionParser.ParseString("", raw)
+	if err != nil {
+		return nil, fmt.Errorf("value has invalid syntax: %w", err)
+	}
+	err = parsed.checkForCustomError()
+	if err != nil {
+		return nil, err
+	}
+
+	return parsed, nil
 }

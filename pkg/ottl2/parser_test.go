@@ -242,3 +242,84 @@ func TestParser_environment(t *testing.T) {
 		})
 	}
 }
+
+func TestParser_conditions(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected any
+		penv     *ParserContext
+		env      *EvalContext
+	}{
+		{
+			name:     "literal true",
+			input:    "true",
+			expected: true,
+		},
+		{
+			name:     "literal false",
+			input:    "false",
+			expected: false,
+		},
+		{
+			name:     "or expressions",
+			input:    "false or true",
+			expected: true,
+		},
+		{
+			name:     "and expressions",
+			input:    "false and true",
+			expected: false,
+		},
+		{
+			name:     "lt comparison",
+			input:    "0 < 5",
+			expected: true,
+		},
+		{
+			name:     "lte comparison",
+			input:    "5 <= 5",
+			expected: true,
+		},
+		{
+			name:     "gt comparison",
+			input:    "0 > 5",
+			expected: false,
+		},
+		{
+			name:     "gte comparison",
+			input:    "0 >= 5",
+			expected: false,
+		},
+		{
+			name:     "ne comparison",
+			input:    "0 != 5",
+			expected: true,
+		},
+	}
+	ctx := context.Background()
+	var p Parser
+	var env EvalContext
+	for _, tt := range tests {
+		if tt.penv != nil {
+			p = NewParser(*tt.penv)
+		} else {
+			p = NewParser(NewParserEnvironemnt(
+				[]string{},
+				map[string]types.Function{},
+			))
+		}
+		if tt.env != nil {
+			env = *tt.env
+		} else {
+			env = newEnv()
+		}
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := p.ParseConditionString(tt.input)
+			assert.Nil(t, err)
+			result := expr.Eval(ctx, env).Value()
+			assert.Nil(t, err)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

@@ -6,6 +6,7 @@ package ottl2 // import "github.com/open-telemetry/opentelemetry-collector-contr
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/traits"
@@ -66,7 +67,7 @@ func (l *lookUp) Eval(ctx context.Context, ec EvalContext) types.Val {
 	if v, ok := ec.ResolveName(l.name); ok {
 		return v
 	}
-	panic(fmt.Sprintf("Unable to find name [%s] on context %v", l.name, ec))
+	return types.NewErrorVal(fmt.Errorf("unable to find name [%s] on context %v", l.name, ec))
 }
 
 func LookupExpr(n string) Interpretable {
@@ -218,8 +219,9 @@ func DivExpr(lhs Interpretable, rhs Interpretable) Interpretable {
 
 // TODO - this should store the raw Function interface, not lookup via name.
 type funcCall struct {
-	f    types.Function
-	args []Interpretable
+	f         types.Function
+	args      []Interpretable
+	namedArgs map[string]Interpretable
 }
 
 // Eval implements Interpretable.
@@ -228,14 +230,99 @@ func (f *funcCall) Eval(ctx context.Context, ec EvalContext) types.Val {
 	for idx, v := range f.args {
 		args[idx] = v.Eval(ctx, ec)
 	}
-	result, err := f.f.Call(args)
-	if err == nil {
-		return result
+	nargs := map[string]types.Val{}
+	for n, v := range f.namedArgs {
+		nargs[n] = v.Eval(ctx, ec)
 	}
-	// TODO - create error type to return...
-	panic(fmt.Sprintf("Invalid function call: %v", f))
+	result, err := f.f.Call(args, nargs)
+	if err != nil {
+		return types.NewErrorVal(err)
+	}
+	return result
 }
 
-func FuncCallExpr(f types.Function, args []Interpretable) Interpretable {
-	return &funcCall{f, args}
+func FuncCallExpr(f types.Function, args []Interpretable, namedArgs map[string]Interpretable) Interpretable {
+	return &funcCall{f, args, namedArgs}
+}
+
+type negExpr struct {
+	e Interpretable
+}
+
+func (n *negExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+	orig, err := n.e.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
+	if err != nil {
+		return types.NewErrorVal(err)
+	}
+	return types.NewBoolVal(!orig.(bool))
+}
+
+func NotExpr(e Interpretable) Interpretable {
+	return &negExpr{e}
+}
+
+type andExpr struct {
+	lhs Interpretable
+	rhs Interpretable
+}
+
+func (a *andExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+	lhs, err := a.lhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
+	if err != nil {
+		return types.NewErrorVal(err)
+	}
+	if !lhs.(bool) {
+		return types.NewBoolVal(false)
+	}
+	rhs, err := a.rhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
+	if err != nil {
+		return types.NewErrorVal(err)
+	}
+	return types.NewBoolVal(rhs.(bool))
+}
+
+func AndExpr(lhs Interpretable, rhs Interpretable) Interpretable {
+	return &andExpr{lhs, rhs}
+}
+
+type orExpr struct {
+	lhs Interpretable
+	rhs Interpretable
+}
+
+func (a *orExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+	lhs, err := a.lhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
+	if err != nil {
+		return types.NewErrorVal(err)
+	}
+	if lhs.(bool) {
+		return types.NewBoolVal(true)
+	}
+	rhs, err := a.rhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
+	if err != nil {
+		return types.NewErrorVal(err)
+	}
+	return types.NewBoolVal(rhs.(bool))
+}
+
+func OrExpr(lhs Interpretable, rhs Interpretable) Interpretable {
+	return &orExpr{lhs, rhs}
+}
+
+type binOpFunc func(types.Val, types.Val) types.Val
+type binOpExpr struct {
+	lhs Interpretable
+	rhs Interpretable
+	f   binOpFunc
+}
+
+func (b *binOpExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+	// TODO - should we check for errors?
+	lhs := b.lhs.Eval(ctx, ec)
+	rhs := b.rhs.Eval(ctx, ec)
+	return b.f(lhs, rhs)
+}
+
+func NewBinaryOperation(lhs Interpretable, rhs Interpretable, op func(types.Val, types.Val) types.Val) Interpretable {
+	return &binOpExpr{lhs, rhs, op}
 }

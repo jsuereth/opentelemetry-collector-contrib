@@ -60,6 +60,9 @@ type ParserContext interface {
 	// ResolveFunction returns a function form context by qualified name, or false if the name
 	// could not be found.
 	ResolveFunction(name string) (types.Function, bool)
+
+	// Resolves an enumeration name into its value.
+	ResolveEnum(name string) (types.Val, bool)
 }
 
 type ParserEnvironment struct {
@@ -92,4 +95,8 @@ func (p ParserEnvironment) HasName(name string) bool {
 func (p ParserEnvironment) ResolveFunction(name string) (types.Function, bool) {
 	f, ok := p.functions[name]
 	return f, ok
+}
+
+func (p ParserEnvironment) ResolveEnum(name string) (types.Val, bool) {
+	return types.NewErrorVal(fmt.Errorf("no such enum: %s", name)), false
 }

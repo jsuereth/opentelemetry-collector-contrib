@@ -45,9 +45,8 @@ var float64Type = reflect.TypeOf((float64)(0))
 // Flaots are addable
 func (f float64Val) Add(o Val) Val {
 	rhs, err := o.ConvertTo(float64Type)
-	// TODO - return error somehow.
 	if err != nil {
-		panic(fmt.Sprintf("Unable to add numbers, found: %v+%v", f, o))
+		return NewErrorVal(err)
 	}
 	return (float64Val)((float64)(f) + rhs.(float64))
 }

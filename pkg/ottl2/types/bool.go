@@ -8,12 +8,10 @@ import (
 	"reflect" // Stores literal boolean values
 )
 
-type boolVal struct {
-	value bool
-}
+type boolVal bool
 
 // How we coeerce between known types in OTLP.
-func (b *boolVal) ConvertTo(typeDesc reflect.Type) (any, error) {
+func (b boolVal) ConvertTo(typeDesc reflect.Type) (any, error) {
 	switch typeDesc.Kind() {
 	case reflect.Bool:
 		return reflect.ValueOf(b).Convert(typeDesc).Interface(), nil
@@ -21,7 +19,7 @@ func (b *boolVal) ConvertTo(typeDesc reflect.Type) (any, error) {
 		switch typeDesc {
 		default:
 			if typeDesc.Elem().Kind() == reflect.Bool {
-				p := bool(b.value)
+				p := bool(b)
 				return &p, nil
 			}
 		}
@@ -37,12 +35,12 @@ func (b *boolVal) ConvertTo(typeDesc reflect.Type) (any, error) {
 	return nil, fmt.Errorf("type conversion error from bool to '%v'", typeDesc)
 }
 
-func (b *boolVal) Value() any {
-	return (bool)(b.value)
+func (b boolVal) Value() any {
+	return (bool)(b)
 }
 
 func NewBoolVal(v bool) Val {
-	return &boolVal{v}
+	return (boolVal)(v)
 }
 
 var (

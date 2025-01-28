@@ -43,9 +43,8 @@ var int64Type = reflect.TypeOf(int64(0))
 // Integers are addable
 func (i int64Val) Add(o Val) Val {
 	rhs, err := o.ConvertTo(int64Type)
-	// TODO - return error somehow.
 	if err != nil {
-		panic(fmt.Sprintf("Unable to add numbers, found: %v+%v", i, o))
+		return NewErrorVal(err)
 	}
 	return (int64Val)((int64)(i) + rhs.(int64))
 }
@@ -53,11 +52,27 @@ func (i int64Val) Add(o Val) Val {
 // Integers are subtractable
 func (i int64Val) Subtract(o Val) Val {
 	rhs, err := o.ConvertTo(int64Type)
-	// TODO - return error somehow.
 	if err != nil {
-		panic(fmt.Sprintf("Unable to subtract numbers, found: %v+%v", i, o))
+		return NewErrorVal(err)
 	}
 	return (int64Val)((int64)(i) - rhs.(int64))
+}
+
+// Integers are comparable
+func (i int64Val) Equals(o Val) bool {
+	rhs, err := o.ConvertTo(int64Type)
+	if err != nil {
+		return false
+	}
+	return ((int64)(i) == rhs.(int64))
+}
+
+func (i int64Val) LessThan(o Val) bool {
+	rhs, err := o.ConvertTo(int64Type)
+	if err != nil {
+		return false
+	}
+	return ((int64)(i) < rhs.(int64))
 }
 
 func NewIntVal(v int64) Val {
