@@ -25,7 +25,13 @@ func NewParser(env ParserContext) Parser {
 
 // Parses a statement into a Condition and an Expression.
 func (p *Parser) parseStatement(s parsedStatement) (Interpretable, Interpretable, error) {
-	condition, err := p.parseBooleanExpression(*s.WhereClause)
+	var condition Interpretable
+	var err error
+	if s.WhereClause != nil {
+		condition, err = p.parseBooleanExpression(*s.WhereClause)
+	} else {
+		condition = BooleanExpr(true)
+	}
 	if err != nil {
 		return nil, nil, err
 	}

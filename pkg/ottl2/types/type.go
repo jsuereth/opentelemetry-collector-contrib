@@ -14,7 +14,7 @@ type Type interface {
 	// - List
 	// - Custom(Name)
 
-	// TODO - Equals Checking?
+	// TODO - trait description, so we can know that we can safely cast a `Val` to a trait interface.
 }
 
 // A type that has members (fields).
@@ -23,6 +23,9 @@ type StructType interface {
 
 	// Returns the type of a field if it exists on this structure type.
 	GetField(name string) (Type, bool)
+
+	// Returns field names of a structural type
+	FieldNames() []string
 }
 
 type primitiveType struct {
@@ -40,6 +43,15 @@ func NewPrimitiveType(name string) Type {
 type structureType struct {
 	name   string
 	fields map[string]Type
+}
+
+// FieldNames implements StructType.
+func (s structureType) FieldNames() []string {
+	result := []string{}
+	for n, _ := range s.fields {
+		result = append(result, n)
+	}
+	return result
 }
 
 func (s structureType) Name() string {

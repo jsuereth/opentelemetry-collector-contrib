@@ -3,18 +3,33 @@
 
 package ottl2 // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2"
 
-import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types" // Context to run transformations
+import (
+	"fmt"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types" // Context to run transformations
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/traits"
+)
 
 type TransformContext[E any] struct {
 	pCtx      ParserEnvironment
 	constants map[string]types.Val
+	converter func(E) types.Val
 }
 
-func NewTransformContext[E any](ctxType any, opts ...Option[E]) TransformContext[E] {
-	// TODO - take the "todo" type for E and use it.
+// TODO - see if we cna infer a types.StructType from a go interface...
+func NewTransformContext[E any](
+	ctxType types.StructType,
+	converter func(E) types.Val, // Converts the raw context type into a `types.Val` with `traits.StructureAccessible` matching the `ctxType`.
+	opts ...Option[E]) TransformContext[E] {
+	contextFields := map[string]types.Type{}
+	for _, field := range ctxType.FieldNames() {
+		t, _ := ctxType.GetField(field)
+		contextFields[field] = t
+	}
 	result := TransformContext[E]{
-		pCtx:      NewParserEnvironemnt(map[string]types.Type{}, map[string]types.Function{}),
+		pCtx:      NewParserEnvironemnt(contextFields, map[string]types.Function{}),
 		constants: map[string]types.Val{},
+		converter: converter,
 	}
 	for _, opt := range opts {
 		opt.f(&result)
@@ -69,7 +84,27 @@ func (e TransformContext[E]) ResolveEnum(name string) (types.Val, bool) {
 	return e.pCtx.ResolveEnum(name)
 }
 
+type valDrivenTransformEnviroment struct {
+	source types.Val
+}
+
+// Parent implements EvalContext.
+func (v *valDrivenTransformEnviroment) Parent() EvalContext {
+	return nil
+}
+
+func (v *valDrivenTransformEnviroment) String() string {
+	return fmt.Sprintf("Ctx{%v}", v.source)
+}
+
+// ResolveName implements EvalContext.
+func (v *valDrivenTransformEnviroment) ResolveName(name string) (types.Val, bool) {
+	r := v.source.(traits.StructureAccessible).GetField(name)
+	return r, r.Type() != types.ErrorType
+}
+
 // Constructs an evaluation context for E.
-func (e TransformContext[E]) NewEvalContext(ctx E) TransformEnvironment {
-	panic("Unimplemented")
+func (e TransformContext[E]) NewEvalContext(ctx E) EvalContext {
+	v := e.converter(ctx)
+	return &valDrivenTransformEnviroment{v}
 }
