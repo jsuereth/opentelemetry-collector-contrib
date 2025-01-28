@@ -84,21 +84,21 @@ func (e TransformContext[E]) ResolveEnum(name string) (types.Val, bool) {
 	return e.pCtx.ResolveEnum(name)
 }
 
-type valDrivenTransformEnviroment struct {
+type valDrivenEvalContext struct {
 	source types.Val
 }
 
 // Parent implements EvalContext.
-func (v *valDrivenTransformEnviroment) Parent() EvalContext {
+func (v *valDrivenEvalContext) Parent() EvalContext {
 	return nil
 }
 
-func (v *valDrivenTransformEnviroment) String() string {
-	return fmt.Sprintf("Ctx{%v}", v.source)
+func (v *valDrivenEvalContext) String() string {
+	return fmt.Sprintf("Context{%v}", v.source)
 }
 
 // ResolveName implements EvalContext.
-func (v *valDrivenTransformEnviroment) ResolveName(name string) (types.Val, bool) {
+func (v *valDrivenEvalContext) ResolveName(name string) (types.Val, bool) {
 	r := v.source.(traits.StructureAccessible).GetField(name)
 	return r, r.Type() != types.ErrorType
 }
@@ -106,5 +106,5 @@ func (v *valDrivenTransformEnviroment) ResolveName(name string) (types.Val, bool
 // Constructs an evaluation context for E.
 func (e TransformContext[E]) NewEvalContext(ctx E) EvalContext {
 	v := e.converter(ctx)
-	return &valDrivenTransformEnviroment{v}
+	return &valDrivenEvalContext{v}
 }
