@@ -10,7 +10,6 @@ import (
 	"github.com/alecthomas/participle/v2"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/traits"
-	"go.opentelemetry.io/collector/component"
 ) // Parser is responsible for converting an OTTL expression string into an Expr.
 type Parser struct {
 	env ParserContext
@@ -20,25 +19,6 @@ func NewParser(env ParserContext) Parser {
 	return Parser{
 		env,
 	}
-}
-
-// TODO - Simplify this entry point.
-func ParseStatement[E EvalContext](statement string, env ParserContext) (Statement[E], error) {
-	p := NewParser(env)
-	parsed, err := parseRawStatement(statement)
-	if err != nil {
-		return Statement[E]{}, err
-	}
-	condition, expr, err := p.parseStatement(*parsed)
-	if err != nil {
-		return Statement[E]{}, err
-	}
-	return Statement[E]{
-		function:          expr,
-		condition:         condition,
-		origText:          statement,
-		telemetrySettings: component.TelemetrySettings{}, // TODO - telemetry settings
-	}, nil
 }
 
 // Parses a statement into a Condition and an Expression.
