@@ -54,24 +54,30 @@ func (s spanVal) GetField(field string) Val {
 					return err
 				}
 				ptrace.Span(s).SetName(n.(string))
-				return err
+				return nil
 			},
 		)
 	case "kind":
 	case "start_time_unix_nano":
+		// TODO - Getter/Settter
 		return NewIntVal(ptrace.Span(s).StartTimestamp().AsTime().UnixNano())
 	case "end_time_unix_nano":
+		// TODO - Getter/Settter
 		return NewIntVal(ptrace.Span(s).EndTimestamp().AsTime().UnixNano())
 	case "start_time":
 	case "end_time":
 	case "attributes":
+		return NewPmapVar(ptrace.Span(s).Attributes())
 	case "dropped_attributes_count":
+		// TODO - Getter/Settter
 		return NewIntVal(int64(ptrace.Span(s).DroppedAttributesCount()))
 	case "events":
 	case "dropped_events_count":
+		// TODO - Getter/Settter
 		return NewIntVal(int64(ptrace.Span(s).DroppedEventsCount()))
 	case "links":
 	case "dropped_links_count":
+		// TODO - Getter/Settter
 		return NewIntVal(int64(ptrace.Span(s).DroppedLinksCount()))
 	case "status":
 	}

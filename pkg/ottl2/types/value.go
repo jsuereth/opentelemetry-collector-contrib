@@ -12,9 +12,6 @@ type Val interface {
 	// Understands how to convert this type to others.
 	ConvertTo(typeDesc reflect.Type) (any, error)
 
-	// Equal returns true if the `other` value has the same type and content as the implementing struct.
-	// Equal(other Val) Val
-
 	// The type of this Val.
 	Type() Type
 
