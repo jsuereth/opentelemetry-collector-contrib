@@ -135,7 +135,13 @@ func (p *Parser) parseArguments(a []argument) ([]Interpretable, map[string]Inter
 func (p *Parser) parseArgument(a argument) (Interpretable, error) {
 	// Example for function name: replace_pattern(attributes["message"], Sha256)
 	if a.FunctionName != nil {
-		panic(fmt.Sprintf("function name arguments unsupported, found %v", a))
+		// TODO - return function as a value
+		if f, ok := p.env.ResolveFunction(*a.FunctionName); ok {
+			panic(fmt.Sprintf("function name arguments unsupported, found %v", f))
+		} else {
+			return NilExpr(), fmt.Errorf("unable to find function: %s", *a.FunctionName)
+		}
+
 	}
 	return p.parseValue(a.Value)
 }

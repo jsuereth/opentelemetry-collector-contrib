@@ -63,6 +63,10 @@ func (p pvalVal) Value() any {
 // pvalVal is a Var
 func (p pvalVal) SetValue(v Val) error {
 	switch v.Type() {
+	case PvalType:
+		other := pcommon.Value(v.(pvalVal))
+		other.CopyTo(pcommon.Value(p))
+		return nil
 	case BoolType:
 		b, err := v.ConvertTo(reflect.TypeFor[bool]())
 		if err != nil {
@@ -90,6 +94,9 @@ func (p pvalVal) SetValue(v Val) error {
 			return err
 		}
 		pcommon.Value(p).SetInt(s.(int64))
+		return nil
+	case NilType:
+		// Do nothing.
 		return nil
 	}
 	// TODO - other types...
