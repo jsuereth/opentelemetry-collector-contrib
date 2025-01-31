@@ -47,21 +47,18 @@ func (m *testContext) Value() any {
 }
 
 func IsEmptyFunc() types.Function {
-	return types.NewRawFunc(func(args []types.Val) (types.Val, error) {
-		if len(args) != 1 {
-			return types.NilVal, fmt.Errorf("wrong number of args for IsEmpty: %v", args)
-		}
+	return types.NewSimpleFunc(1, func(args []types.Val) types.Val {
 		r, err := args[0].ConvertTo(reflect.TypeFor[string]())
 		if err != nil {
-			return types.NilVal, err
+			return types.NewErrorVal(err)
 		}
-		return types.NewBoolVal(len(r.(string)) == 0), nil
+		return types.NewBoolVal(len(r.(string)) == 0)
 	})
 }
 
 func RouteFunc() types.Function {
-	return types.NewRawFunc(func(args []types.Val) (types.Val, error) {
-		return types.NewBoolVal(true), nil
+	return types.NewSimpleFunc(0, func(args []types.Val) types.Val {
+		return types.NewBoolVal(true)
 	})
 }
 

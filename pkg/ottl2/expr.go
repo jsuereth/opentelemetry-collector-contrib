@@ -17,7 +17,6 @@ import (
 type Interpretable interface {
 	// Eval an Activation to produce an output.
 	Eval(ctx context.Context, ec EvalContext) types.Val
-	// TODO - decide of we can isolate this.
 	// Disallow implementations outside this package.
 	// unexportedFactoryFunc()
 }
@@ -237,11 +236,7 @@ func (f *funcCall) Eval(ctx context.Context, ec EvalContext) types.Val {
 	for n, v := range f.namedArgs {
 		nargs[n] = v.Eval(ctx, ec)
 	}
-	result, err := f.f.Call(args, nargs)
-	if err != nil {
-		return types.NewErrorVal(err)
-	}
-	return result
+	return types.CallFunction(f.f, args, nargs)
 }
 
 func FuncCallExpr(f types.Function, args []Interpretable, namedArgs map[string]Interpretable) Interpretable {
