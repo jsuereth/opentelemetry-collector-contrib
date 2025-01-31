@@ -23,9 +23,6 @@ func (n *nilVal) ConvertTo(typeDesc reflect.Type) (any, error) {
 	switch typeDesc.Kind() {
 	case reflect.Bool:
 		return false, nil
-	case reflect.Int64:
-		// TODO - should we treat nil as zero?
-		return 0, nil
 	case reflect.Ptr:
 		return nil, nil
 	case reflect.Interface:

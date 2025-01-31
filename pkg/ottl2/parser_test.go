@@ -218,7 +218,7 @@ func TestParser_environment(t *testing.T) {
 				return NewParserEnvironemnt(
 					map[string]types.Type{"test": types.StringType},
 					map[string]types.Function{
-						"doSomething": types.NewSimpleFunc(1, func(v []types.Val) types.Val {
+						"doSomething": types.NewSimpleFunc("doSomething", 1, func(v []types.Val) types.Val {
 							return v[0]
 						}),
 					},

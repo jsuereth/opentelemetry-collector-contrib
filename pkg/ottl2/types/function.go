@@ -7,15 +7,20 @@ import (
 	"fmt" // This defines function execution within the runtime of OTTL.
 )
 
+// A Custom functions defined for OTTL.
 type Function interface {
+	// The name of the function.
+	Name() string
 	// Calls the given function.
-	// TODO - Remove named args?
+	// All named or default arguments MUST be turned positional before calling this.
 	Call(args []Val) Val
-	// TODO - meta information about a function, including
-	// type-tests and expected parameters.
 
 	// The names of arguments in positional order.
+	// Empty names are considered positional arguments only.
 	ArgNames() []string
+
+	// Default values for arguments.
+	// Default arguments MUST have names.
 	DefaultArgs() map[string]Val
 }
 
@@ -43,7 +48,11 @@ func createArgs(f Function, pos []Val, named map[string]Val) ([]Val, error) {
 		} else if v, ok := defaults[name]; name != "" && ok {
 			result[i] = v
 		} else {
-			return result, fmt.Errorf("invalid argument list for %v, missing paramater #%d (%s)", f, i, name)
+			if name != "" {
+				return result, fmt.Errorf("invalid argument list for %s, missing paramater #%d: %s", f.Name(), i, name)
+			} else {
+				return result, fmt.Errorf("invalid argument list for %s, missing paramater #%d", f.Name(), i)
+			}
 		}
 	}
 	return result, nil
@@ -51,8 +60,14 @@ func createArgs(f Function, pos []Val, named map[string]Val) ([]Val, error) {
 
 // This type does not support named args.
 type simpleFunc struct {
+	name    string
 	numArgs int
 	f       func([]Val) Val
+}
+
+// Name implements Function.
+func (f *simpleFunc) Name() string {
+	return f.name
 }
 
 // ArgNames implements Function.
@@ -69,14 +84,20 @@ func (f *simpleFunc) Call(args []Val) Val {
 	return f.f(args)
 }
 
-func NewSimpleFunc(numArgs int, f func([]Val) Val) Function {
-	return &simpleFunc{numArgs, f}
+func NewSimpleFunc(name string, numArgs int, f func([]Val) Val) Function {
+	return &simpleFunc{name, numArgs, f}
 }
 
 type advancedFunction struct {
+	name        string
 	argNames    []string
 	defaultArgs map[string]Val
 	f           func([]Val) Val
+}
+
+// Name implements Function.
+func (a advancedFunction) Name() string {
+	return a.name
 }
 
 // ArgNames implements Function.
@@ -96,6 +117,8 @@ func (a advancedFunction) DefaultArgs() map[string]Val {
 
 // Constructs a function that can have named or default parameters.
 func NewFunc(
+	// Name of the function.
+	name string,
 	// Names of argument values.  Empty strings denote positional only args.
 	argNames []string,
 	// Default arguments. Must be used with named parameters.
@@ -105,5 +128,5 @@ func NewFunc(
 	f func([]Val) Val,
 ) Function {
 	// TODO - verify named arguments exist in argument list.
-	return advancedFunction{argNames, defaultArgs, f}
+	return advancedFunction{name, argNames, defaultArgs, f}
 }

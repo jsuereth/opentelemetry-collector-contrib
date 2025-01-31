@@ -47,7 +47,7 @@ func (m *testContext) Value() any {
 }
 
 func IsEmptyFunc() types.Function {
-	return types.NewSimpleFunc(1, func(args []types.Val) types.Val {
+	return types.NewSimpleFunc("IsEmpty", 1, func(args []types.Val) types.Val {
 		r, err := args[0].ConvertTo(reflect.TypeFor[string]())
 		if err != nil {
 			return types.NewErrorVal(err)
@@ -57,7 +57,7 @@ func IsEmptyFunc() types.Function {
 }
 
 func RouteFunc() types.Function {
-	return types.NewSimpleFunc(0, func(args []types.Val) types.Val {
+	return types.NewSimpleFunc("route", 0, func(args []types.Val) types.Val {
 		return types.NewBoolVal(true)
 	})
 }
@@ -66,8 +66,10 @@ func Test_simple_e2e(t *testing.T) {
 	env := NewTransformContext[testContext](
 		testContextType,
 		func(v testContext) types.Val { return &v },
-		WithFunction[testContext]("IsEmpty", IsEmptyFunc()),
-		WithFunction[testContext]("route", RouteFunc()),
+		WithFunctions[testContext]([]types.Function{
+			IsEmptyFunc(),
+			RouteFunc(),
+		}),
 	)
 	stmt, err := ParseStatement(env, "route() where IsEmpty(name)")
 	assert.Nil(t, err)

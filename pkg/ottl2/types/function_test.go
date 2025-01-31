@@ -33,6 +33,7 @@ func TestFunction_CallFunction(t *testing.T) {
 		{
 			name: "positional only",
 			f: NewFunc(
+				"test",
 				[]string{"", ""},
 				map[string]Val{},
 				addAll,
@@ -44,6 +45,7 @@ func TestFunction_CallFunction(t *testing.T) {
 		{
 			name: "named only",
 			f: NewFunc(
+				"test",
 				[]string{"lhs", "rhs"},
 				map[string]Val{},
 				addAll,
@@ -58,6 +60,7 @@ func TestFunction_CallFunction(t *testing.T) {
 		{
 			name: "default only",
 			f: NewFunc(
+				"test",
 				[]string{"lhs", "rhs"},
 				map[string]Val{
 					"lhs": NewIntVal(1),
@@ -72,6 +75,7 @@ func TestFunction_CallFunction(t *testing.T) {
 		{
 			name: "named and default only",
 			f: NewFunc(
+				"test",
 				[]string{"lhs", "rhs"},
 				map[string]Val{
 					"lhs": NewIntVal(1),
@@ -88,6 +92,7 @@ func TestFunction_CallFunction(t *testing.T) {
 		{
 			name: "named and positional only",
 			f: NewFunc(
+				"test",
 				[]string{"lhs", "rhs"},
 				map[string]Val{
 					"lhs": NewIntVal(1),
@@ -106,6 +111,7 @@ func TestFunction_CallFunction(t *testing.T) {
 		{
 			name: "named, defualt and positional",
 			f: NewFunc(
+				"test",
 				[]string{"", "lhs", "rhs"},
 				map[string]Val{
 					"lhs": NewIntVal(1),

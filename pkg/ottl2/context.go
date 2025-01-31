@@ -42,10 +42,21 @@ type Option[E any] struct {
 }
 
 // Registers a function (editor or convertor) usable in this transformation.
-func WithFunction[E any](name string, f types.Function) Option[E] {
+func WithFunction[E any](f types.Function) Option[E] {
 	return Option[E]{
 		func(c *TransformContext[E]) {
-			c.pCtx.functions[name] = f
+			c.pCtx.functions[f.Name()] = f
+		},
+	}
+}
+
+// Registers a set of functions function (editor or convertor).
+func WithFunctions[E any](fs []types.Function) Option[E] {
+	return Option[E]{
+		func(c *TransformContext[E]) {
+			for _, f := range fs {
+				c.pCtx.functions[f.Name()] = f
+			}
 		},
 	}
 }
