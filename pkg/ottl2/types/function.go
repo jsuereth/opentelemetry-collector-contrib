@@ -73,5 +73,37 @@ func NewSimpleFunc(numArgs int, f func([]Val) Val) Function {
 	return &simpleFunc{numArgs, f}
 }
 
-// TODO - new function via reflection
-// TODO - function with named arguments.
+type advancedFunction struct {
+	argNames    []string
+	defaultArgs map[string]Val
+	f           func([]Val) Val
+}
+
+// ArgNames implements Function.
+func (a advancedFunction) ArgNames() []string {
+	return a.argNames
+}
+
+// Call implements Function.
+func (a advancedFunction) Call(args []Val) Val {
+	return a.f(args)
+}
+
+// DefaultArgs implements Function.
+func (a advancedFunction) DefaultArgs() map[string]Val {
+	return a.defaultArgs
+}
+
+// Constructs a function that can have named or default parameters.
+func NewFunc(
+	// Names of argument values.  Empty strings denote positional only args.
+	argNames []string,
+	// Default arguments. Must be used with named parameters.
+	defaultArgs map[string]Val,
+	// A positional-only implementation of the function.
+	// All named/default arguments will be turned positional using argNames before calling this.
+	f func([]Val) Val,
+) Function {
+	// TODO - verify named arguments exist in argument list.
+	return advancedFunction{argNames, defaultArgs, f}
+}
