@@ -4,6 +4,7 @@
 package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2"
 
 import (
+	"fmt"
 	"reflect" // Val interface defines the functions supported by all expression values.
 )
 
@@ -51,6 +52,10 @@ func (g getterSetterVar) Type() Type {
 
 func (g getterSetterVar) Value() any {
 	return g.getter().Value()
+}
+
+func (g getterSetterVar) String() string {
+	return fmt.Sprintf("lens{type:%s}", g.Type().Name())
 }
 
 func NewGetterSetterVar(tpe Type, getter Getter, setter Setter) Var {

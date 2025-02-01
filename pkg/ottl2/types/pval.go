@@ -68,32 +68,16 @@ func (p pvalVal) SetValue(v Val) error {
 		other.CopyTo(pcommon.Value(p))
 		return nil
 	case BoolType:
-		b, err := v.ConvertTo(reflect.TypeFor[bool]())
-		if err != nil {
-			return err
-		}
-		pcommon.Value(p).SetBool(b.(bool))
+		pcommon.Value(p).SetBool(v.Value().(bool))
 		return nil
 	case StringType:
-		s, err := v.ConvertTo(reflect.TypeFor[string]())
-		if err != nil {
-			return err
-		}
-		pcommon.Value(p).SetStr(s.(string))
+		pcommon.Value(p).SetStr(v.Value().(string))
 		return nil
 	case FloatType:
-		s, err := v.ConvertTo(reflect.TypeFor[float64]())
-		if err != nil {
-			return err
-		}
-		pcommon.Value(p).SetDouble(s.(float64))
+		pcommon.Value(p).SetDouble(v.Value().(float64))
 		return nil
 	case IntType:
-		s, err := v.ConvertTo(reflect.TypeFor[int64]())
-		if err != nil {
-			return err
-		}
-		pcommon.Value(p).SetInt(s.(int64))
+		pcommon.Value(p).SetInt(v.Value().(int64))
 		return nil
 	case NilType:
 		// Do nothing.
