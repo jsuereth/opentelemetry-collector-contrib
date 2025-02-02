@@ -62,6 +62,14 @@ func (s spanVal) GetField(field string) Val {
 		)
 	case "trace_state":
 	case "parent_span_id":
+		return NewSpanIDVar(
+			func() pcommon.SpanID {
+				return ptrace.Span(s).ParentSpanID()
+			},
+			func(si pcommon.SpanID) {
+				ptrace.Span(s).SetParentSpanID(si)
+			},
+		)
 	case "name":
 		return NewGetterSetterVar(
 			StringType,

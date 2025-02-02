@@ -91,24 +91,24 @@ func TestSpanFields(t *testing.T) {
 		// 		span.TraceState().FromRaw("key1=newVal,key2=val2")
 		// 	},
 		// },
-		// {
-		// 	name:   "parent_span_id",
-		// 	path:   []string{"parent_span_id"},
-		// 	orig:   pcommon.SpanID(spanID2),
-		// 	newVal: pcommon.SpanID(spanID),
-		// 	modified: func(span ptrace.Span) {
-		// 		span.SetParentSpanID(spanID)
-		// 	},
-		// },
-		// {
-		// 	name:   "parent_span_id string",
-		// 	path:   []string{"parent_span_id", "string"},
-		// 	orig:   hex.EncodeToString(spanID2[:]),
-		// 	newVal: hex.EncodeToString(spanID[:]),
-		// 	modified: func(span ptrace.Span) {
-		// 		span.SetParentSpanID(spanID)
-		// 	},
-		// },
+		{
+			name:   "parent_span_id",
+			path:   []string{"parent_span_id"},
+			orig:   pcommon.SpanID(spanID2),
+			newVal: NewSpanIDVal(pcommon.SpanID(spanID)),
+			expect: func(t *testing.T, s ptrace.Span) {
+				assert.Equal(t, pcommon.SpanID(spanID), s.ParentSpanID())
+			},
+		},
+		{
+			name:   "parent_span_id string",
+			path:   []string{"parent_span_id", "string"},
+			orig:   hex.EncodeToString(spanID2[:]),
+			newVal: NewStringVal(hex.EncodeToString(spanID[:])),
+			expect: func(t *testing.T, s ptrace.Span) {
+				assert.Equal(t, hex.EncodeToString(spanID[:]), s.ParentSpanID().String())
+			},
+		},
 		{
 			name:     "name",
 			path:     []string{"name"},
