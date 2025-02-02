@@ -21,13 +21,13 @@ var (
 )
 
 func TestSpanFields(t *testing.T) {
-	refSpan := createSpan()
+	// refSpan := createSpan()
 	newAttrs := pcommon.NewMap()
 	newAttrs.PutStr("hello", "world")
 
 	tests := []struct {
 		name     string
-		path     []string
+		path     []testPath
 		orig     any
 		newVal   Val
 		expected any
@@ -35,7 +35,7 @@ func TestSpanFields(t *testing.T) {
 	}{
 		{
 			name:     "trace_id",
-			path:     []string{"trace_id"},
+			path:     []testPath{fieldPath("trace_id")},
 			orig:     pcommon.TraceID(traceID),
 			newVal:   NewTraceIdVal(pcommon.TraceID(traceID2)),
 			expected: pcommon.TraceID(traceID2),
@@ -45,21 +45,21 @@ func TestSpanFields(t *testing.T) {
 		},
 		{
 			name:     "span_id",
-			path:     []string{"span_id"},
+			path:     []testPath{fieldPath("span_id")},
 			orig:     pcommon.SpanID(spanID),
 			newVal:   NewSpanIDVal(pcommon.SpanID(spanID2)),
 			expected: pcommon.SpanID(spanID2),
 		},
 		{
 			name:     "trace_id string",
-			path:     []string{"trace_id", "string"},
+			path:     []testPath{fieldPath("trace_id"), fieldPath("string")},
 			orig:     hex.EncodeToString(traceID[:]),
 			newVal:   NewStringVal(hex.EncodeToString(traceID2[:])),
 			expected: hex.EncodeToString(traceID2[:]),
 		},
 		{
 			name:   "span_id string",
-			path:   []string{"span_id", "string"},
+			path:   []testPath{fieldPath("span_id"), fieldPath("string")},
 			orig:   hex.EncodeToString(spanID[:]),
 			newVal: NewStringVal(hex.EncodeToString(spanID2[:])),
 			expect: func(t *testing.T, s ptrace.Span) {
@@ -93,7 +93,7 @@ func TestSpanFields(t *testing.T) {
 		// },
 		{
 			name:   "parent_span_id",
-			path:   []string{"parent_span_id"},
+			path:   []testPath{fieldPath("parent_span_id")},
 			orig:   pcommon.SpanID(spanID2),
 			newVal: NewSpanIDVal(pcommon.SpanID(spanID)),
 			expect: func(t *testing.T, s ptrace.Span) {
@@ -102,7 +102,7 @@ func TestSpanFields(t *testing.T) {
 		},
 		{
 			name:   "parent_span_id string",
-			path:   []string{"parent_span_id", "string"},
+			path:   []testPath{fieldPath("parent_span_id"), fieldPath("string")},
 			orig:   hex.EncodeToString(spanID2[:]),
 			newVal: NewStringVal(hex.EncodeToString(spanID[:])),
 			expect: func(t *testing.T, s ptrace.Span) {
@@ -111,35 +111,35 @@ func TestSpanFields(t *testing.T) {
 		},
 		{
 			name:     "name",
-			path:     []string{"name"},
+			path:     []testPath{fieldPath("name")},
 			orig:     "bear",
 			newVal:   NewStringVal("cat"),
 			expected: "cat",
 		},
 		// {
 		// 	name:     "kind",
-		// 	path:     []string{"kind"},
+		// 	path:     []testPath{"kind"},
 		// 	orig:     int64(2),
 		// 	newVal:   NewIntVal(int64(3)),
 		// 	expected: ptrace.SpanKindClient,
 		// },
 		// {
 		// 	name:     "string kind",
-		// 	path:     []string{"kind", "string"},
+		// 	path:     []testPath{"kind", "string"},
 		// 	orig:     "Server",
 		// 	newVal:   NewStringVal("Client"),
 		// 	expected: ptrace.SpanKindClient,
 		// },
 		// {
 		// 	name:     "deprecated string kind",
-		// 	path:     []string{"kind", "deprecated_string"},
+		// 	path:     []testPath{"kind", "deprecated_string"},
 		// 	orig:     "SPAN_KIND_SERVER",
 		// 	newVal:   NewStringVal("SPAN_KIND_CLIENT"),
 		// 	expected: ptrace.SpanKindClient,
 		// },
 		{
 			name:   "start_time_unix_nano",
-			path:   []string{"start_time_unix_nano"},
+			path:   []testPath{fieldPath("start_time_unix_nano")},
 			orig:   int64(100_000_000),
 			newVal: NewIntVal(int64(200_000_000)),
 			expect: func(t *testing.T, s ptrace.Span) {
@@ -148,36 +148,34 @@ func TestSpanFields(t *testing.T) {
 		},
 		{
 			name:   "end_time_unix_nano",
-			path:   []string{"end_time_unix_nano"},
+			path:   []testPath{fieldPath("end_time_unix_nano")},
 			orig:   int64(500_000_000),
 			newVal: NewIntVal(int64(200_000_000)),
 			expect: func(t *testing.T, s ptrace.Span) {
 				assert.Equal(t, time.Unix(0, 200_000_000).UTC(), s.EndTimestamp().AsTime())
 			},
 		},
-		{
-			name:     "attributes",
-			path:     []string{"attributes"},
-			orig:     refSpan.Attributes(),
-			newVal:   NewPmapVar(newAttrs),
-			expected: newAttrs,
-		},
 		// {
-		// 	name: "attributes string",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("str"),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig:   "val",
-		// 	newVal: "newVal",
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Attributes().PutStr("str", "newVal")
-		// 	},
+		// 	name:     "attributes",
+		// 	path:     []testPath{fieldPath("attributes")},
+		// 	orig:     refSpan.Attributes(),
+		// 	newVal:   NewPmapVar(newAttrs),
+		// 	expected: newAttrs,
 		// },
+		{
+			name: "attributes string",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("str"),
+			},
+			orig:   pcommon.NewValueStr("val"),
+			newVal: NewStringVal("newVal"),
+			expect: func(t *testing.T, s ptrace.Span) {
+				v, ok := s.Attributes().Get("str")
+				assert.True(t, ok)
+				assert.Equal(t, "newVal", v.AsString())
+			},
+		},
 		// {
 		// 	name: "attributes bool",
 		// 	path: &TestPath[*spanContext]{
@@ -411,7 +409,7 @@ func TestSpanFields(t *testing.T) {
 		// },
 		{
 			name:     "dropped_attributes_count",
-			path:     []string{"dropped_attributes_count"},
+			path:     []testPath{fieldPath("dropped_attributes_count")},
 			orig:     int64(10),
 			newVal:   NewIntVal(20),
 			expected: int64(20),
@@ -430,7 +428,7 @@ func TestSpanFields(t *testing.T) {
 		// },
 		{
 			name:     "dropped_events_count",
-			path:     []string{"dropped_events_count"},
+			path:     []testPath{fieldPath("dropped_events_count")},
 			orig:     int64(20),
 			newVal:   NewIntVal(10),
 			expected: int64(10),
@@ -449,7 +447,7 @@ func TestSpanFields(t *testing.T) {
 		// },
 		{
 			name:     "dropped_links_count",
-			path:     []string{"dropped_links_count"},
+			path:     []testPath{fieldPath("dropped_links_count")},
 			orig:     int64(30),
 			newVal:   NewIntVal(40),
 			expected: int64(40),
@@ -483,32 +481,29 @@ func TestSpanFields(t *testing.T) {
 		// },
 		{
 			name:     "start_time",
-			path:     []string{"start_time"},
+			path:     []testPath{fieldPath("start_time")},
 			orig:     time.Date(1970, 1, 1, 0, 0, 0, 100000000, time.UTC),
 			newVal:   NewTimeVal(time.Date(1970, 1, 1, 0, 0, 0, 200000000, time.UTC)),
-			expected: time.UnixMilli(200),
+			expected: time.UnixMilli(200).UTC(),
 		},
 		{
 			name:     "end_time",
-			path:     []string{"end_time"},
+			path:     []testPath{fieldPath("end_time")},
 			orig:     time.Date(1970, 1, 1, 0, 0, 0, 500000000, time.UTC),
 			newVal:   NewTimeVal(time.Date(1970, 1, 1, 0, 0, 0, 200000000, time.UTC)),
-			expected: time.UnixMilli(200),
+			expected: time.UnixMilli(200).UTC(),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			span := createSpan()
-			v := NewSpanVal(span)
-			for _, n := range tt.path {
-				v = v.(interface{ GetField(string) Val }).GetField(n)
-			}
+			v := lookupTestPath(NewSpanVal(span), tt.path)
 			result := v.Value()
 			assert.Equal(t, tt.orig, result)
 			setter, ok := v.(Var)
 			if !ok {
-				assert.Fail(t, "path %v is not mutable, found: %v", tt.path, v)
+				assert.Fail(t, "path %v is not mutable", pathString(tt.path))
 			}
 			err := setter.SetValue(tt.newVal)
 			assert.Nil(t, err)

@@ -71,84 +71,70 @@ func (s spanVal) GetField(field string) Val {
 			},
 		)
 	case "name":
-		return NewGetterSetterVar(
-			StringType,
-			func() Val {
-				return NewStringVal(ptrace.Span(s).Name())
+		return NewStringVar(
+			func() string {
+				return ptrace.Span(s).Name()
 			},
-			func(v Val) error {
-				n, err := v.ConvertTo(reflect.TypeFor[string]())
-				if err != nil {
-					return err
-				}
-				ptrace.Span(s).SetName(n.(string))
-				return nil
+			func(v string) {
+				ptrace.Span(s).SetName(v)
 			},
 		)
 	case "kind":
 	case "start_time_unix_nano":
-		return NewGetterSetterVar(
-			IntType,
-			func() Val {
-				return NewIntVal(ptrace.Span(s).StartTimestamp().AsTime().UnixNano())
+		return NewIntVar(
+			func() int64 {
+				return ptrace.Span(s).StartTimestamp().AsTime().UnixNano()
 			},
-			func(v Val) error {
-				if t, ok := v.Value().(int64); ok {
-					ptrace.Span(s).SetStartTimestamp(pcommon.NewTimestampFromTime(time.Unix(0, t)))
-				}
-				return nil
+			func(t int64) {
+				ptrace.Span(s).SetStartTimestamp(pcommon.NewTimestampFromTime(time.Unix(0, t)))
 			},
 		)
 	case "end_time_unix_nano":
-		return NewGetterSetterVar(
-			IntType,
-			func() Val {
-				return NewIntVal(ptrace.Span(s).EndTimestamp().AsTime().UnixNano())
+		return NewIntVar(
+			func() int64 {
+				return ptrace.Span(s).EndTimestamp().AsTime().UnixNano()
 			},
-			func(v Val) error {
-				if t, ok := v.Value().(int64); ok {
-					ptrace.Span(s).SetEndTimestamp(pcommon.NewTimestampFromTime(time.Unix(0, t)))
-				}
-				return nil
+			func(t int64) {
+				ptrace.Span(s).SetEndTimestamp(pcommon.NewTimestampFromTime(time.Unix(0, t)))
 			},
 		)
 	case "start_time":
-		return NewGetterSetterVar(
-			TimeType,
-			func() Val {
-				return NewTimeVal(ptrace.Span(s).StartTimestamp().AsTime())
+		return NewTimeVar(
+			func() time.Time {
+				return ptrace.Span(s).StartTimestamp().AsTime()
 			},
-			func(v Val) error {
-				n := pcommon.NewTimestampFromTime(v.Value().(time.Time))
-				ptrace.Span(s).SetStartTimestamp(n)
-				return nil
+			func(t time.Time) {
+				ptrace.Span(s).SetStartTimestamp(pcommon.NewTimestampFromTime(t))
 			},
 		)
 	case "end_time":
-		return NewGetterSetterVar(
-			TimeType,
-			func() Val {
-				return NewTimeVal(ptrace.Span(s).EndTimestamp().AsTime())
+		return NewTimeVar(
+			func() time.Time {
+				return ptrace.Span(s).EndTimestamp().AsTime()
 			},
-			func(v Val) error {
-				n := pcommon.NewTimestampFromTime(v.Value().(time.Time))
-				ptrace.Span(s).SetEndTimestamp(n)
-				return nil
+			func(t time.Time) {
+				ptrace.Span(s).SetEndTimestamp(pcommon.NewTimestampFromTime(t))
 			},
 		)
 	case "attributes":
 		return NewPmapVar(ptrace.Span(s).Attributes())
 	case "dropped_attributes_count":
-		// TODO - Getter/Settter
-		return NewIntVal(int64(ptrace.Span(s).DroppedAttributesCount()))
+		return NewIntVar(
+			func() int64 { return int64(ptrace.Span(s).DroppedAttributesCount()) },
+			func(v int64) { ptrace.Span(s).SetDroppedAttributesCount(uint32(v)) },
+		)
 	case "events":
 	case "dropped_events_count":
-		// TODO - Getter/Settter
-		return NewIntVal(int64(ptrace.Span(s).DroppedEventsCount()))
+		return NewIntVar(
+			func() int64 { return int64(ptrace.Span(s).DroppedEventsCount()) },
+			func(v int64) { ptrace.Span(s).SetDroppedEventsCount(uint32(v)) },
+		)
 	case "links":
 	case "dropped_links_count":
-		// TODO - Getter/Settter
-		return NewIntVal(int64(ptrace.Span(s).DroppedLinksCount()))
+		return NewIntVar(
+			func() int64 { return int64(ptrace.Span(s).DroppedLinksCount()) },
+			func(v int64) { ptrace.Span(s).SetDroppedLinksCount(uint32(v)) },
+		)
 	case "status":
 	}
 	return NewErrorVal(fmt.Errorf("unknown field on span: %s", field))

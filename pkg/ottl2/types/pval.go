@@ -57,6 +57,7 @@ func (p pvalVal) Type() Type {
 }
 
 func (p pvalVal) Value() any {
+	// TODO - we should probably erase to a 'primitive' value here if we can.
 	return pcommon.Value(p)
 }
 

@@ -85,3 +85,36 @@ func (i int64Val) LessThan(o Val) bool {
 func NewIntVal(v int64) Val {
 	return (int64Val)(v)
 }
+
+type int64Var struct {
+	getter func() int64
+	setter func(int64)
+}
+
+// ConvertTo implements Var.
+func (i int64Var) ConvertTo(typeDesc reflect.Type) (any, error) {
+	panic("unimplemented")
+}
+
+// SetValue implements Var.
+func (i int64Var) SetValue(v Val) error {
+	// TODO - check types first...
+	if value, ok := v.Value().(int64); ok {
+		i.setter(value)
+	}
+	return nil
+}
+
+// Type implements Var.
+func (i int64Var) Type() Type {
+	return int64Type
+}
+
+// Value implements Var.
+func (i int64Var) Value() any {
+	return i.getter()
+}
+
+func NewIntVar(getter func() int64, setter func(int64)) Var {
+	return int64Var{getter, setter}
+}

@@ -47,3 +47,32 @@ func (s stringVal) Value() any {
 func NewStringVal(v string) Val {
 	return (stringVal)(v)
 }
+
+type string64Var struct {
+	getter func() string
+	setter func(string)
+}
+
+func (i string64Var) ConvertTo(typeDesc reflect.Type) (any, error) {
+	panic("unimplemented")
+}
+
+func (i string64Var) SetValue(v Val) error {
+	// TODO - check types first...
+	if value, ok := v.Value().(string); ok {
+		i.setter(value)
+	}
+	return nil
+}
+
+func (i string64Var) Type() Type {
+	return StringType
+}
+
+func (i string64Var) Value() any {
+	return i.getter()
+}
+
+func NewStringVar(getter func() string, setter func(string)) Var {
+	return string64Var{getter, setter}
+}

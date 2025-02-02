@@ -49,21 +49,15 @@ func (t traceIDVar) Value() any {
 // traceIdVal is StructureAccessible
 func (t traceIDVar) GetField(field string) Val {
 	if field == "string" {
-		return NewGetterSetterVar(
-			StringType,
-			func() Val {
-				return NewStringVal(t.getter().String())
+		return NewStringVar(
+			func() string {
+				return t.getter().String()
 			},
-			func(v Val) error {
-				if str, ok := v.Value().(string); ok {
-					id, err := parseTraceID(str)
-					if err != nil {
-						return err
-					}
+			func(s string) {
+				id, err := parseTraceID(s)
+				if err == nil {
 					t.setter(id)
-					return nil
 				}
-				return fmt.Errorf("{trace_id}.string must take string value: %v", v)
 			},
 		)
 	}

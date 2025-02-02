@@ -50,21 +50,15 @@ func (s spanIDVar) Value() any {
 // SpanID is StructureAccessible.
 func (t spanIDVar) GetField(field string) Val {
 	if field == "string" {
-		return NewGetterSetterVar(
-			StringType,
-			func() Val {
-				return NewStringVal(t.getter().String())
+		return NewStringVar(
+			func() string {
+				return t.getter().String()
 			},
-			func(v Val) error {
-				if str, ok := v.Value().(string); ok {
-					id, err := parseSpanID(str)
-					if err != nil {
-						return err
-					}
+			func(s string) {
+				id, err := parseSpanID(s)
+				if err == nil {
 					t.setter(id)
-					return nil
 				}
-				return fmt.Errorf("{span_id}.string must take string value: %v", v)
 			},
 		)
 	}
