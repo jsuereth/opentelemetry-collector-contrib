@@ -433,33 +433,39 @@ func TestSpanFields(t *testing.T) {
 			newVal:   NewIntVal(40),
 			expected: int64(40),
 		},
-		// {
-		// 	name:   "status",
-		// 	path:   []string{"status"},
-		// 	orig:   refSpan.Status(),
-		// 	newVal: newStatus,
-		// 	modified: func(span ptrace.Span) {
-		// 		newStatus.CopyTo(span.Status())
-		// 	},
-		// },
-		// {
-		// 	name:   "status code",
-		// 	path:   []string{"status", "code"},
-		// 	orig:   int64(ptrace.StatusCodeOk),
-		// 	newVal: int64(ptrace.StatusCodeError),
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Status().SetCode(ptrace.StatusCodeError)
-		// 	},
-		// },
-		// {
-		// 	name:   "status message",
-		// 	path:   []string{"status", "message"},
-		// 	orig:   "good span",
-		// 	newVal: "bad span",
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Status().SetMessage("bad span")
-		// 	},
-		// },
+		{
+			name: "status",
+			path: []testPath{fieldPath("status")},
+			orig: refSpan.Status(),
+			newVal: NewSpanStatusVar(func() ptrace.Status {
+				s := ptrace.NewStatus()
+				s.SetMessage("new status")
+				return s
+			}, func(ptrace.Status) {
+				// ignore
+			}),
+			expect: func(t *testing.T, s ptrace.Span) {
+				assert.Equal(t, "new status", s.Status().Message())
+			},
+		},
+		{
+			name:   "status code",
+			path:   []testPath{fieldPath("status"), fieldPath("code")},
+			orig:   int64(ptrace.StatusCodeOk),
+			newVal: NewIntVal(int64(ptrace.StatusCodeError)),
+			expect: func(t *testing.T, s ptrace.Span) {
+				assert.Equal(t, ptrace.StatusCodeError, s.Status().Code())
+			},
+		},
+		{
+			name:   "status message",
+			path:   []testPath{fieldPath("status"), fieldPath("message")},
+			orig:   "good span",
+			newVal: NewStringVal("bad span"),
+			expect: func(t *testing.T, s ptrace.Span) {
+				assert.Equal(t, "bad span", s.Status().Message())
+			},
+		},
 		{
 			name:     "start_time",
 			path:     []testPath{fieldPath("start_time")},

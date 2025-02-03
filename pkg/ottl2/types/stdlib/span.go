@@ -24,6 +24,7 @@ var SpanType = types.NewStructureType("span", map[string]types.Type{
 	"dropped_attributes_count": IntType,
 	"dropped_events_count":     IntType,
 	"dropped_links_count":      IntType,
+	"status":                   SpanStatusType,
 })
 
 type spanVal ptrace.Span
@@ -146,6 +147,14 @@ func (s spanVal) GetField(field string) types.Val {
 			func(v int64) { ptrace.Span(s).SetDroppedLinksCount(uint32(v)) },
 		)
 	case "status":
+		return NewSpanStatusVar(
+			func() ptrace.Status {
+				return ptrace.Span(s).Status()
+			},
+			func(st ptrace.Status) {
+				st.CopyTo(ptrace.Span(s).Status())
+			},
+		)
 	}
 	return NewErrorVal(fmt.Errorf("unknown field on span: %s", field))
 }
