@@ -16,27 +16,27 @@ func TestPval_setValue(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    types.Val
-		expected pcommon.Value
+		expected any
 	}{
 		{
 			name:     "PVal accepts booleans",
 			input:    NewBoolVal(true),
-			expected: pcommon.NewValueBool(true),
+			expected: true,
 		},
 		{
 			name:     "PVal accepts ints",
 			input:    NewIntVal(24),
-			expected: pcommon.NewValueInt(24),
+			expected: int64(24),
 		},
 		{
 			name:     "PVal accepts floats",
 			input:    NewFloatVal(4.34),
-			expected: pcommon.NewValueDouble(4.34),
+			expected: float64(4.34),
 		},
 		{
 			name:     "PVal accepts strings",
 			input:    NewStringVal("my test"),
-			expected: pcommon.NewValueStr("my test"),
+			expected: "my test",
 		},
 	}
 	for _, tt := range tests {

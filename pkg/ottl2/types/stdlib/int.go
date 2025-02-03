@@ -24,27 +24,7 @@ func (i int64Val) Value() any {
 }
 
 func (i int64Val) ConvertTo(typeDesc reflect.Type) (any, error) {
-	switch typeDesc.Kind() {
-	case reflect.Int64:
-		return reflect.ValueOf(i).Convert(typeDesc).Interface(), nil
-	case reflect.Ptr:
-		switch typeDesc.Elem().Kind() {
-		case reflect.Int64:
-			v := int64(i)
-			p := reflect.New(typeDesc.Elem())
-			p.Elem().Set(reflect.ValueOf(v).Convert(typeDesc.Elem()))
-			return p.Interface(), nil
-		}
-	case reflect.Interface:
-		iv := i.Value()
-		if reflect.TypeOf(iv).Implements(typeDesc) {
-			return iv, nil
-		}
-		if reflect.TypeOf(i).Implements(typeDesc) {
-			return i, nil
-		}
-	}
-	return nil, fmt.Errorf("unsupported type conversion from 'int' to %v", typeDesc)
+	return convertIntTo(int64(i), typeDesc)
 }
 
 var int64Type = reflect.TypeOf(int64(0))
@@ -95,7 +75,7 @@ type int64Var struct {
 
 // ConvertTo implements Var.
 func (i int64Var) ConvertTo(typeDesc reflect.Type) (any, error) {
-	panic("unimplemented")
+	return convertIntTo(i.getter(), typeDesc)
 }
 
 // SetValue implements Var.
@@ -103,8 +83,9 @@ func (i int64Var) SetValue(v types.Val) error {
 	// TODO - check types first...
 	if value, ok := v.Value().(int64); ok {
 		i.setter(value)
+		return nil
 	}
-	return nil
+	return fmt.Errorf("cannot set integer from value: %v", v)
 }
 
 // Type implements Var.
@@ -117,6 +98,35 @@ func (i int64Var) Value() any {
 	return i.getter()
 }
 
+func (i int64Var) Add(o types.Val) types.Val {
+	// TODO - just use Type() directly on o and .Value().(int64)
+	rhs, err := o.ConvertTo(int64Type)
+	if err != nil {
+		return NewErrorVal(err)
+	}
+	return (int64Val)((int64)(i.getter()) + rhs.(int64))
+}
+
 func NewIntVar(getter func() int64, setter func(int64)) types.Var {
 	return int64Var{getter, setter}
+}
+
+func convertIntTo(i int64, typeDesc reflect.Type) (any, error) {
+	switch typeDesc.Kind() {
+	case reflect.Int64:
+		return reflect.ValueOf(i).Convert(typeDesc).Interface(), nil
+	case reflect.Ptr:
+		switch typeDesc.Elem().Kind() {
+		case reflect.Int64:
+			v := int64(i)
+			p := reflect.New(typeDesc.Elem())
+			p.Elem().Set(reflect.ValueOf(v).Convert(typeDesc.Elem()))
+			return p.Interface(), nil
+		}
+	case reflect.Interface:
+		if reflect.TypeOf(i).Implements(typeDesc) {
+			return i, nil
+		}
+	}
+	return nil, fmt.Errorf("unsupported type conversion from 'int' to %v", typeDesc)
 }

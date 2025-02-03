@@ -32,7 +32,7 @@ func (s Statement[K]) logger() *zap.Logger {
 	return s.telemetrySettings.Logger
 }
 
-func (s Statement[K]) Execute(ctx context.Context, env K) (any, bool, error) {
+func (s Statement[K]) Execute(ctx context.Context, env *K) (any, bool, error) {
 	realEnv := s.ctx.NewEvalContext(env)
 	condition, err := s.condition.Eval(ctx, realEnv).ConvertTo(reflect.TypeFor[bool]())
 	defer func() {
@@ -47,9 +47,10 @@ func (s Statement[K]) Execute(ctx context.Context, env K) (any, bool, error) {
 	if condition.(bool) {
 		result = s.function.Eval(ctx, realEnv).Value()
 		// TODO - faster error checking.
-		if reflect.TypeOf(result).AssignableTo(reflect.TypeFor[error]()) {
+		if result != nil && reflect.TypeOf(result).AssignableTo(reflect.TypeFor[error]()) {
 			return nil, true, result.(error)
 		}
+		// panic(fmt.Sprintf("evaluated %v, using %v", env, realEnv))
 	}
 	return result, condition.(bool), nil
 }

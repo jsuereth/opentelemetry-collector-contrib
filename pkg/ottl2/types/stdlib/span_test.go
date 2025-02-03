@@ -22,7 +22,7 @@ var (
 )
 
 func TestSpanFields(t *testing.T) {
-	// refSpan := createSpan()
+	refSpan := createSpan()
 	newAttrs := pcommon.NewMap()
 	newAttrs.PutStr("hello", "world")
 
@@ -156,20 +156,22 @@ func TestSpanFields(t *testing.T) {
 				assert.Equal(t, time.Unix(0, 200_000_000).UTC(), s.EndTimestamp().AsTime())
 			},
 		},
-		// {
-		// 	name:     "attributes",
-		// 	path:     []testPath{fieldPath("attributes")},
-		// 	orig:     refSpan.Attributes(),
-		// 	newVal:   NewPmapVar(newAttrs),
-		// 	expected: newAttrs,
-		// },
+		{
+			name:   "attributes",
+			path:   []testPath{fieldPath("attributes")},
+			orig:   refSpan.Attributes(),
+			newVal: NewPmapVar(newAttrs),
+			expect: func(t *testing.T, s ptrace.Span) {
+				// TODO - define what to check.
+			},
+		},
 		{
 			name: "attributes string",
 			path: []testPath{
 				fieldPath("attributes"),
 				keyPath("str"),
 			},
-			orig:   pcommon.NewValueStr("val"),
+			orig:   "val",
 			newVal: NewStringVal("newVal"),
 			expect: func(t *testing.T, s ptrace.Span) {
 				v, ok := s.Attributes().Get("str")
@@ -177,103 +179,85 @@ func TestSpanFields(t *testing.T) {
 				assert.Equal(t, "newVal", v.AsString())
 			},
 		},
-		// {
-		// 	name: "attributes bool",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("bool"),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig:   true,
-		// 	newVal: false,
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Attributes().PutBool("bool", false)
-		// 	},
-		// },
-		// {
-		// 	name: "attributes int",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("int"),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig:   int64(10),
-		// 	newVal: int64(20),
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Attributes().PutInt("int", 20)
-		// 	},
-		// },
-		// {
-		// 	name: "attributes float",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("double"),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig:   float64(1.2),
-		// 	newVal: float64(2.4),
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Attributes().PutDouble("double", 2.4)
-		// 	},
-		// },
-		// {
-		// 	name: "attributes bytes",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("bytes"),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig:   []byte{1, 3, 2},
-		// 	newVal: []byte{2, 3, 4},
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Attributes().PutEmptyBytes("bytes").FromRaw([]byte{2, 3, 4})
-		// 	},
-		// },
+		{
+			name: "attributes bool",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("bool"),
+			},
+			orig:   true,
+			newVal: NewBoolVal(false),
+			expect: func(t *testing.T, s ptrace.Span) {
+				v, ok := s.Attributes().Get("bool")
+				assert.True(t, ok)
+				assert.False(t, v.Bool())
+			},
+		},
+		{
+			name: "attributes int",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("int"),
+			},
+			orig:   int64(10),
+			newVal: NewIntVal(20),
+			expect: func(t *testing.T, s ptrace.Span) {
+				v, ok := s.Attributes().Get("int")
+				assert.True(t, ok)
+				assert.Equal(t, int64(20), v.Int())
+			},
+		},
+		{
+			name: "attributes float",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("double"),
+			},
+			orig:   float64(1.2),
+			newVal: NewFloatVal(2.4),
+			expect: func(t *testing.T, s ptrace.Span) {
+				v, ok := s.Attributes().Get("double")
+				assert.True(t, ok)
+				assert.Equal(t, float64(2.4), v.Double())
+			},
+		},
+		{
+			name: "attributes bytes",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("bytes"),
+			},
+			orig: func() any {
+				v := pcommon.NewByteSlice()
+				v.FromRaw([]byte{1, 3, 2})
+				return v
+			}(),
+			newVal: NewByteSliceVal([]byte{2, 3, 4}),
+			expect: func(t *testing.T, s ptrace.Span) {
+				v, ok := s.Attributes().Get("bytes")
+				assert.True(t, ok)
+				assert.Equal(t, []byte{2, 3, 4}, v.Bytes().AsRaw())
+			},
+		},
 		// {
 		// 	name: "attributes array empty",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("arr_empty"),
-		// 			},
-		// 		},
+		// 	path: []testPath{
+		// 		fieldPath("attributes"),
+		// 		keyPath("arr_empty"),
 		// 	},
-		// 	orig: func() pcommon.Slice {
-		// 		val, _ := refSpan.Attributes().Get("arr_empty")
-		// 		return val.Slice()
-		// 	}(),
-		// 	newVal: []any{},
-		// 	modified: func(_ ptrace.Span) {
-		// 		// no-op
+		// 	orig:   pcommon.NewByteSlice(),
+		// 	newVal: NewByteSliceVal([]byte{}),
+		// 	expect: func(t *testing.T, s ptrace.Span) {
+		// 		// no-op ?
 		// 	},
 		// },
 		// {
 		// 	name: "attributes array string",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("arr_str"),
-		// 			},
-		// 		},
+		// 	path: []testPath{
+		// 		fieldPath("attributes"),
+		// 		keyPath("arr_str"),
 		// 	},
-		// 	orig: func() pcommon.Slice {
-		// 		val, _ := refSpan.Attributes().Get("arr_str")
-		// 		return val.Slice()
-		// 	}(),
+		// 	orig:   pcommon.NewStringSlice(),
 		// 	newVal: []string{"new"},
 		// 	modified: func(span ptrace.Span) {
 		// 		span.Attributes().PutEmptySlice("arr_str").AppendEmpty().SetStr("new")

@@ -30,7 +30,7 @@ func setImpl(args []types.Val) types.Val {
 	value := args[1]
 	err := target.SetValue(value)
 	if err != nil {
-		stdlib.NewErrorVal(err)
+		return stdlib.NewErrorVal(err)
 	}
 	return stdlib.NilVal
 }

@@ -14,13 +14,13 @@ import (
 type TransformContext[E any] struct {
 	pCtx      ParserEnvironment
 	constants map[string]types.Val
-	converter func(E) types.Val
+	converter func(*E) types.Val
 }
 
 // TODO - see if we cna infer a types.StructType from a go interface...
 func NewTransformContext[E any](
 	ctxType types.StructType,
-	converter func(E) types.Val, // Converts the raw context type into a `types.Val` with `traits.StructureAccessible` matching the `ctxType`.
+	converter func(*E) types.Val, // Converts the raw context type into a `types.Val` with `traits.StructureAccessible` matching the `ctxType`.
 	opts ...Option[E]) TransformContext[E] {
 	contextFields := map[string]types.Type{}
 	for _, field := range ctxType.FieldNames() {
@@ -116,7 +116,7 @@ func (v *valDrivenEvalContext) ResolveName(name string) (types.Val, bool) {
 }
 
 // Constructs an evaluation context for E.
-func (e TransformContext[E]) NewEvalContext(ctx E) EvalContext {
+func (e TransformContext[E]) NewEvalContext(ctx *E) EvalContext {
 	v := e.converter(ctx)
 	return &valDrivenEvalContext{v}
 }

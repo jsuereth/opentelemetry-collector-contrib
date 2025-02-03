@@ -58,8 +58,27 @@ func (p pvalVal) Type() types.Type {
 }
 
 func (p pvalVal) Value() any {
-	// TODO - we should probably erase to a 'primitive' value here if we can.
-	return pcommon.Value(p)
+	switch pcommon.Value(p).Type() {
+	case pcommon.ValueTypeBool:
+		return pcommon.Value(p).Bool()
+	case pcommon.ValueTypeBytes:
+		return pcommon.Value(p).Bytes()
+	case pcommon.ValueTypeDouble:
+		return pcommon.Value(p).Double()
+	case pcommon.ValueTypeEmpty:
+		return nil
+	case pcommon.ValueTypeInt:
+		return pcommon.Value(p).Int()
+	case pcommon.ValueTypeMap:
+		return pcommon.Value(p).Map()
+	case pcommon.ValueTypeSlice:
+		// TODO - refine slice into specific array?
+		return pcommon.Value(p).Slice()
+	case pcommon.ValueTypeStr:
+		return pcommon.Value(p).AsString()
+	default:
+		panic("unexpected pcommon.ValueType")
+	}
 }
 
 // pvalVal is a Var
@@ -83,6 +102,9 @@ func (p pvalVal) SetValue(v types.Val) error {
 		return nil
 	case NilType:
 		// Do nothing.
+		return nil
+	case ByteSliceType:
+		pcommon.Value(p).SetEmptyBytes().FromRaw(v.Value().([]byte))
 		return nil
 	}
 	// TODO - other types...
