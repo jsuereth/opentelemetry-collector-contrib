@@ -67,31 +67,27 @@ func TestSpanFields(t *testing.T) {
 				assert.Equal(t, hex.EncodeToString(spanID2[:]), s.SpanID().String())
 			},
 		},
-		// {
-		// 	name:   "trace_state",
-		// 	path:   []string{"trace_state"},
-		// 	orig:   "key1=val1,key2=val2",
-		// 	newVal: "key=newVal",
-		// 	modified: func(span ptrace.Span) {
-		// 		span.TraceState().FromRaw("key=newVal")
-		// 	},
-		// },
-		// {
-		// 	name: "trace_state key",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "trace_state",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("key1"),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig:   "val1",
-		// 	newVal: "newVal",
-		// 	modified: func(span ptrace.Span) {
-		// 		span.TraceState().FromRaw("key1=newVal,key2=val2")
-		// 	},
-		// },
+		{
+			name:   "trace_state",
+			path:   []testPath{fieldPath("trace_state")},
+			orig:   "key1=val1,key2=val2",
+			newVal: NewStringVal("key=newVal"),
+			expect: func(t *testing.T, s ptrace.Span) {
+				assert.Equal(t, "key=newVal", s.TraceState().AsRaw())
+			},
+		},
+		{
+			name: "trace_state key",
+			path: []testPath{
+				fieldPath("trace_state"),
+				keyPath("key1"),
+			},
+			orig:   "val1",
+			newVal: NewStringVal("newVal"),
+			expect: func(t *testing.T, s ptrace.Span) {
+				assert.Equal(t, "key1=newVal,key2=val2", s.TraceState().AsRaw())
+			},
+		},
 		{
 			name:   "parent_span_id",
 			path:   []testPath{fieldPath("parent_span_id")},

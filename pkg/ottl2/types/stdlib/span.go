@@ -14,7 +14,9 @@ import (
 
 var SpanType = types.NewStructureType("span", map[string]types.Type{
 	"name":                     StringType,
+	"span_id":                  SpanIDType,
 	"trace_id":                 TraceIDType,
+	"trace_state":              TraceStateType,
 	"start_time":               TimeType,
 	"start_time_unix_nano":     IntType,
 	"end_time":                 TimeType,
@@ -61,6 +63,14 @@ func (s spanVal) GetField(field string) types.Val {
 			},
 		)
 	case "trace_state":
+		return NewTraceStateVar(
+			func() string {
+				return ptrace.Span(s).TraceState().AsRaw()
+			},
+			func(ts string) {
+				ptrace.Span(s).TraceState().FromRaw(ts)
+			},
+		)
 	case "parent_span_id":
 		return NewSpanIDVar(
 			func() pcommon.SpanID {
