@@ -220,28 +220,56 @@ func DivExpr(lhs Interpretable, rhs Interpretable) Interpretable {
 	return &divOp{lhs, rhs}
 }
 
-// TODO - this should store the raw Function interface, not lookup via name.
+type funcArg struct {
+	constant *types.Val
+	expr     *Interpretable
+}
+
 type funcCall struct {
-	f         types.Function
-	args      []Interpretable
-	namedArgs map[string]Interpretable
+	f    types.Function
+	args []funcArg
 }
 
 // Eval implements Interpretable.
 func (f *funcCall) Eval(ctx context.Context, ec EvalContext) types.Val {
 	args := make([]types.Val, len(f.args))
 	for idx, v := range f.args {
-		args[idx] = v.Eval(ctx, ec)
+		switch {
+		case v.constant != nil:
+			args[idx] = *v.constant
+		case v.expr != nil:
+			args[idx] = (*v.expr).Eval(ctx, ec)
+		}
 	}
-	nargs := map[string]types.Val{}
-	for n, v := range f.namedArgs {
-		nargs[n] = v.Eval(ctx, ec)
-	}
-	return stdlib.CallFunction(f.f, args, nargs)
+	return f.f.Call(args)
 }
 
 func FuncCallExpr(f types.Function, args []Interpretable, namedArgs map[string]Interpretable) Interpretable {
-	return &funcCall{f, args, namedArgs}
+	// erase named/default values to ONLY be positional when interpreting.
+	names := f.ArgNames()
+	defaults := f.DefaultArgs()
+	realArgs := make([]funcArg, len(names))
+	for i, name := range names {
+		if i < len(args) {
+			realArgs[i] = funcArg{
+				expr: &args[i],
+			}
+		} else if v, ok := namedArgs[name]; name != "" && ok {
+			realArgs[i] = funcArg{
+				expr: &v,
+			}
+		} else if v, ok := defaults[name]; name != "" && ok {
+			realArgs[i] = funcArg{
+				constant: &v,
+			}
+		} else {
+			// TODO - should this ne parser or typer error?
+			realArgs[i] = funcArg{
+				constant: &stdlib.NilVal,
+			}
+		}
+	}
+	return &funcCall{f, realArgs}
 }
 
 type negExpr struct {

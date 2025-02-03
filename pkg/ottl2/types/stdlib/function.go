@@ -80,7 +80,7 @@ func NewFunc(
 	return advancedFunction{name, argNames, defaultArgs, f}
 }
 
-// Calls a function using its default and named arguments.
+// Calls a function using its default and named arguments. (for testing only)
 func CallFunction(f types.Function, pos []types.Val, named map[string]types.Val) types.Val {
 	args, err := createArgs(f, pos, named)
 	if err != nil {
