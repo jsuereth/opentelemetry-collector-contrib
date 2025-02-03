@@ -1,18 +1,19 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"fmt"
 	"reflect"
 	"time"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
-var SpanType = NewStructureType("span", map[string]Type{
+var SpanType = types.NewStructureType("span", map[string]types.Type{
 	"name":                     StringType,
 	"trace_id":                 TraceIDType,
 	"start_time":               TimeType,
@@ -27,7 +28,7 @@ var SpanType = NewStructureType("span", map[string]Type{
 type spanVal ptrace.Span
 
 // Type implements Val.
-func (s spanVal) Type() Type {
+func (s spanVal) Type() types.Type {
 	return SpanType
 }
 
@@ -40,7 +41,7 @@ func (s spanVal) Value() any {
 }
 
 // Span has members
-func (s spanVal) GetField(field string) Val {
+func (s spanVal) GetField(field string) types.Val {
 	switch field {
 	case "trace_id":
 		return NewTraceIdVar(
@@ -140,6 +141,6 @@ func (s spanVal) GetField(field string) Val {
 	return NewErrorVal(fmt.Errorf("unknown field on span: %s", field))
 }
 
-func NewSpanVal(s ptrace.Span) Val {
+func NewSpanVal(s ptrace.Span) types.Val {
 	return spanVal(s)
 }

@@ -9,6 +9,7 @@ import (
 	"reflect"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/traits"
 )
 
@@ -36,29 +37,29 @@ func ValExpr(v types.Val) Interpretable {
 
 func BooleanExpr(v bool) Interpretable {
 	if v {
-		return ValExpr(types.TrueVal)
+		return ValExpr(stdlib.TrueVal)
 	}
-	return ValExpr(types.FalseVal)
+	return ValExpr(stdlib.FalseVal)
 }
 
 func NilExpr() Interpretable {
-	return ValExpr(types.NilVal)
+	return ValExpr(stdlib.NilVal)
 }
 
 func IntExpr(v int64) Interpretable {
-	return ValExpr(types.NewIntVal(v))
+	return ValExpr(stdlib.NewIntVal(v))
 }
 
 func FloatExpr(v float64) Interpretable {
-	return ValExpr(types.NewFloatVal(v))
+	return ValExpr(stdlib.NewFloatVal(v))
 }
 
 func StringExpr(v string) Interpretable {
-	return ValExpr(types.NewStringVal(v))
+	return ValExpr(stdlib.NewStringVal(v))
 }
 
 func ByteSliceExpr(v []byte) Interpretable {
-	return ValExpr(types.NewByteSliceVal(v))
+	return ValExpr(stdlib.NewByteSliceVal(v))
 }
 
 type lookUp struct {
@@ -69,7 +70,7 @@ func (l *lookUp) Eval(ctx context.Context, ec EvalContext) types.Val {
 	if v, ok := ec.ResolveName(l.name); ok {
 		return v
 	}
-	return types.NewErrorVal(fmt.Errorf("unable to find name [%s] on context %v", l.name, ec))
+	return stdlib.NewErrorVal(fmt.Errorf("unable to find name [%s] on context %v", l.name, ec))
 }
 
 func LookupExpr(n string) Interpretable {
@@ -132,7 +133,7 @@ func (l *listExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
 		r := v.Eval(ctx, ec)
 		list[i] = r
 	}
-	return types.NewListVal(list)
+	return stdlib.NewListVal(list)
 }
 
 func ListExpr(items []Interpretable) Interpretable {
@@ -150,7 +151,7 @@ func (m *mapExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
 		r := v.Eval(ctx, ec)
 		result[k] = r
 	}
-	return types.NewMapVal(result)
+	return stdlib.NewMapVal(result)
 }
 
 func MapExpr(items map[string]Interpretable) Interpretable {
@@ -236,7 +237,7 @@ func (f *funcCall) Eval(ctx context.Context, ec EvalContext) types.Val {
 	for n, v := range f.namedArgs {
 		nargs[n] = v.Eval(ctx, ec)
 	}
-	return types.CallFunction(f.f, args, nargs)
+	return stdlib.CallFunction(f.f, args, nargs)
 }
 
 func FuncCallExpr(f types.Function, args []Interpretable, namedArgs map[string]Interpretable) Interpretable {
@@ -250,9 +251,9 @@ type negExpr struct {
 func (n *negExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
 	orig, err := n.e.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
 	if err != nil {
-		return types.NewErrorVal(err)
+		return stdlib.NewErrorVal(err)
 	}
-	return types.NewBoolVal(!orig.(bool))
+	return stdlib.NewBoolVal(!orig.(bool))
 }
 
 func NotExpr(e Interpretable) Interpretable {
@@ -267,16 +268,16 @@ type andExpr struct {
 func (a *andExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
 	lhs, err := a.lhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
 	if err != nil {
-		return types.NewErrorVal(err)
+		return stdlib.NewErrorVal(err)
 	}
 	if !lhs.(bool) {
-		return types.NewBoolVal(false)
+		return stdlib.NewBoolVal(false)
 	}
 	rhs, err := a.rhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
 	if err != nil {
-		return types.NewErrorVal(err)
+		return stdlib.NewErrorVal(err)
 	}
-	return types.NewBoolVal(rhs.(bool))
+	return stdlib.NewBoolVal(rhs.(bool))
 }
 
 func AndExpr(lhs Interpretable, rhs Interpretable) Interpretable {
@@ -291,16 +292,16 @@ type orExpr struct {
 func (a *orExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
 	lhs, err := a.lhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
 	if err != nil {
-		return types.NewErrorVal(err)
+		return stdlib.NewErrorVal(err)
 	}
 	if lhs.(bool) {
-		return types.NewBoolVal(true)
+		return stdlib.NewBoolVal(true)
 	}
 	rhs, err := a.rhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
 	if err != nil {
-		return types.NewErrorVal(err)
+		return stdlib.NewErrorVal(err)
 	}
-	return types.NewBoolVal(rhs.(bool))
+	return stdlib.NewBoolVal(rhs.(bool))
 }
 
 func OrExpr(lhs Interpretable, rhs Interpretable) Interpretable {

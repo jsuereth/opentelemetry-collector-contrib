@@ -1,23 +1,24 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"errors"
 	"fmt"
 	"reflect"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 // TODO - define a special pccomon.Map type
 // We want this to denote it can be keyed
-var PmapType = NewPrimitiveType("pcommon.Map")
+var PmapType = types.NewPrimitiveType("pcommon.Map")
 
 type pmapVal pcommon.Map
 
-func (m pmapVal) Type() Type {
+func (m pmapVal) Type() types.Type {
 	return PmapType
 }
 
@@ -50,7 +51,7 @@ func (m pmapVal) Value() any {
 }
 
 // PmapVal is KeyAccessible
-func (m pmapVal) GetKey(key string) Val {
+func (m pmapVal) GetKey(key string) types.Val {
 	// Note: pcommon.Map and pcommon.Value are references that mutate the underlying value.
 	// so we don't need to use a getter/setter appraoch.
 	v, ok := pcommon.Map(m).Get(key)
@@ -61,7 +62,7 @@ func (m pmapVal) GetKey(key string) Val {
 }
 
 // SetValue implements Var.
-func (m pmapVal) SetValue(o Val) error {
+func (m pmapVal) SetValue(o types.Val) error {
 	other, err := o.ConvertTo(reflect.TypeFor[pcommon.Map]())
 	if err != nil {
 		return err
@@ -85,7 +86,7 @@ func (e *emptyMapKeyVar) ConvertTo(typeDesc reflect.Type) (any, error) {
 }
 
 // SetValue implements Var.
-func (e *emptyMapKeyVar) SetValue(v Val) error {
+func (e *emptyMapKeyVar) SetValue(v types.Val) error {
 	// TODO - check all supported types and write one.
 	switch v.Type() {
 	case BoolType:
@@ -115,7 +116,7 @@ func (e *emptyMapKeyVar) SetValue(v Val) error {
 	panic("unimplemented")
 }
 
-func (e *emptyMapKeyVar) Type() Type {
+func (e *emptyMapKeyVar) Type() types.Type {
 	return PvalType
 }
 
@@ -127,10 +128,10 @@ func (e *emptyMapKeyVar) Value() any {
 	return nil
 }
 
-func newEmptyMapKeyVar(m pcommon.Map, key string) Var {
+func newEmptyMapKeyVar(m pcommon.Map, key string) types.Var {
 	return &emptyMapKeyVar{m, key}
 }
 
-func NewPmapVar(m pcommon.Map) Var {
+func NewPmapVar(m pcommon.Map) types.Var {
 	return pmapVal(m)
 }

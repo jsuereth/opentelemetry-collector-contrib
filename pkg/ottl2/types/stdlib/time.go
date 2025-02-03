@@ -1,14 +1,16 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"reflect"
 	"time"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
 
-var TimeType = NewPrimitiveType("time.Time")
+var TimeType = types.NewPrimitiveType("time.Time")
 
 type timeVal time.Time
 
@@ -18,7 +20,7 @@ func (t timeVal) ConvertTo(typeDesc reflect.Type) (any, error) {
 }
 
 // Type implements Val.
-func (t timeVal) Type() Type {
+func (t timeVal) Type() types.Type {
 	return TimeType
 }
 
@@ -27,7 +29,7 @@ func (t timeVal) Value() any {
 	return time.Time(t)
 }
 
-func NewTimeVal(v time.Time) Val {
+func NewTimeVal(v time.Time) types.Val {
 	return timeVal(v)
 }
 
@@ -40,14 +42,14 @@ func (t timeVar) ConvertTo(typeDesc reflect.Type) (any, error) {
 	panic("unimplemented")
 }
 
-func (t timeVar) SetValue(v Val) error {
+func (t timeVar) SetValue(v types.Val) error {
 	if value, ok := v.Value().(time.Time); ok {
 		t.setter(value)
 	}
 	return nil
 }
 
-func (t timeVar) Type() Type {
+func (t timeVar) Type() types.Type {
 	return TimeType
 }
 
@@ -55,6 +57,6 @@ func (t timeVar) Value() any {
 	return t.getter()
 }
 
-func NewTimeVar(getter func() time.Time, setter func(time.Time)) Var {
+func NewTimeVar(getter func() time.Time, setter func(time.Time)) types.Var {
 	return timeVar{getter, setter}
 }

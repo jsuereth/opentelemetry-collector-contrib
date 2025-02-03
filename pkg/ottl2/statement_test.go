@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +23,7 @@ type testContext struct {
 var testContextType = types.NewStructureType(
 	"MyContext",
 	map[string]types.Type{
-		"name": types.StringType,
+		"name": stdlib.StringType,
 	},
 )
 
@@ -35,9 +36,9 @@ func (m *testContext) ConvertTo(typeDesc reflect.Type) (any, error) {
 func (m *testContext) GetField(field string) types.Val {
 	switch field {
 	case "name":
-		return types.NewStringVal(m.name)
+		return stdlib.NewStringVal(m.name)
 	}
-	return types.NewErrorVal(fmt.Errorf("unknown field: %s", field))
+	return stdlib.NewErrorVal(fmt.Errorf("unknown field: %s", field))
 }
 func (m *testContext) Type() types.Type {
 	return testContextType
@@ -47,18 +48,18 @@ func (m *testContext) Value() any {
 }
 
 func IsEmptyFunc() types.Function {
-	return types.NewSimpleFunc("IsEmpty", 1, func(args []types.Val) types.Val {
+	return stdlib.NewSimpleFunc("IsEmpty", 1, func(args []types.Val) types.Val {
 		r, err := args[0].ConvertTo(reflect.TypeFor[string]())
 		if err != nil {
-			return types.NewErrorVal(err)
+			return stdlib.NewErrorVal(err)
 		}
-		return types.NewBoolVal(len(r.(string)) == 0)
+		return stdlib.NewBoolVal(len(r.(string)) == 0)
 	})
 }
 
 func RouteFunc() types.Function {
-	return types.NewSimpleFunc("route", 0, func(args []types.Val) types.Val {
-		return types.NewBoolVal(true)
+	return stdlib.NewSimpleFunc("route", 0, func(args []types.Val) types.Val {
+		return stdlib.NewBoolVal(true)
 	})
 }
 

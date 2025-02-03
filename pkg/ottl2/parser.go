@@ -10,6 +10,7 @@ import (
 
 	"github.com/alecthomas/participle/v2"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/traits"
 ) // Parser is responsible for converting an OTTL expression string into an Expr.
 type Parser struct {
@@ -150,7 +151,7 @@ func (p *Parser) parsePath(e path) (Interpretable, error) {
 	// So we MAY have context, or we MAY just have a field.
 	// We likely want to attach return types to Interpretable at some point.
 	var result Interpretable = nil
-	var currentType types.Type = types.NilType
+	var currentType types.Type = stdlib.NilType
 	if e.Context != "" {
 		t, ok := p.env.ResolveName(e.Context)
 		if !ok {
@@ -375,32 +376,32 @@ func (p *Parser) parseComparison(ce comparison) (Interpretable, error) {
 	case eq:
 		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
 			result := l.(traits.Comparable).Equals(r)
-			return types.NewBoolVal(result)
+			return stdlib.NewBoolVal(result)
 		}), nil
 	case ne:
 		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
 			result := !l.(traits.Comparable).Equals(r)
-			return types.NewBoolVal(result)
+			return stdlib.NewBoolVal(result)
 		}), nil
 	case lt:
 		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
 			result := l.(traits.Comparable).LessThan(r)
-			return types.NewBoolVal(result)
+			return stdlib.NewBoolVal(result)
 		}), nil
 	case lte:
 		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
 			result := l.(traits.Comparable).LessThan(r) || l.(traits.Comparable).Equals(r)
-			return types.NewBoolVal(result)
+			return stdlib.NewBoolVal(result)
 		}), nil
 	case gte:
 		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
 			result := !l.(traits.Comparable).LessThan(r)
-			return types.NewBoolVal(result)
+			return stdlib.NewBoolVal(result)
 		}), nil
 	case gt:
 		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
 			result := !(l.(traits.Comparable).LessThan(r) || l.(traits.Comparable).Equals(r))
-			return types.NewBoolVal(result)
+			return stdlib.NewBoolVal(result)
 		}), nil
 	}
 	return NilExpr(), fmt.Errorf("unknown comparison: %v", ce)

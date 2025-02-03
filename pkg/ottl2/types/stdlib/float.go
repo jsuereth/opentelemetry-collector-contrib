@@ -1,19 +1,21 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
 
-var FloatType = NewPrimitiveType("float")
+var FloatType = types.NewPrimitiveType("float")
 
 type float64Val float64
 
 // Type implements Val.
-func (f float64Val) Type() Type {
+func (f float64Val) Type() types.Type {
 	return FloatType
 }
 
@@ -50,7 +52,7 @@ func (f float64Val) Value() any {
 var float64Type = reflect.TypeOf((float64)(0))
 
 // Flaots are addable
-func (f float64Val) Add(o Val) Val {
+func (f float64Val) Add(o types.Val) types.Val {
 	rhs, err := o.ConvertTo(float64Type)
 	if err != nil {
 		return NewErrorVal(err)
@@ -58,7 +60,7 @@ func (f float64Val) Add(o Val) Val {
 	return (float64Val)((float64)(f) + rhs.(float64))
 }
 
-func NewFloatVal(v float64) Val {
+func NewFloatVal(v float64) types.Val {
 	h := (float64Val)(v)
 	return &h
 }

@@ -1,17 +1,21 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+)
 
 // TODO - we should use type-constructor type for lists.
-var ListType = NewPrimitiveType("list")
+var ListType = types.NewPrimitiveType("list")
 
-type listVal[T Val] []T
+type listVal[T types.Val] []T
 
 // Type implements Val.
-func (i listVal[T]) Type() Type {
+func (i listVal[T]) Type() types.Type {
 	return ListType
 }
 
@@ -29,10 +33,10 @@ func (i listVal[T]) Value() any {
 }
 
 // List is Indexable
-func (l listVal[T]) GetIndex(index int64) Val {
+func (l listVal[T]) GetIndex(index int64) types.Val {
 	return l[index]
 }
 
-func NewListVal[T Val](v []T) Val {
+func NewListVal[T types.Val](v []T) types.Val {
 	return (listVal[T])(v)
 }

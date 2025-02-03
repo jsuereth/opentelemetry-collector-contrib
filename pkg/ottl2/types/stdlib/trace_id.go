@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"encoding/hex"
@@ -9,11 +9,12 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-var TraceIDType = NewStructureType("TraceID",
-	map[string]Type{
+var TraceIDType = types.NewStructureType("TraceID",
+	map[string]types.Type{
 		"string": StringType,
 	})
 
@@ -28,7 +29,7 @@ func (t traceIDVar) ConvertTo(typeDesc reflect.Type) (any, error) {
 }
 
 // SetValue implements Var.
-func (t traceIDVar) SetValue(v Val) error {
+func (t traceIDVar) SetValue(v types.Val) error {
 	id, ok := v.Value().(pcommon.TraceID)
 	if ok {
 		t.setter(id)
@@ -37,7 +38,7 @@ func (t traceIDVar) SetValue(v Val) error {
 }
 
 // Type implements Var.
-func (t traceIDVar) Type() Type {
+func (t traceIDVar) Type() types.Type {
 	return TraceIDType
 }
 
@@ -47,7 +48,7 @@ func (t traceIDVar) Value() any {
 }
 
 // traceIdVal is StructureAccessible
-func (t traceIDVar) GetField(field string) Val {
+func (t traceIDVar) GetField(field string) types.Val {
 	if field == "string" {
 		return NewStringVar(
 			func() string {
@@ -65,11 +66,11 @@ func (t traceIDVar) GetField(field string) Val {
 }
 
 func NewTraceIdVar(getter func() pcommon.TraceID,
-	setter func(pcommon.TraceID)) Var {
+	setter func(pcommon.TraceID)) types.Var {
 	return traceIDVar{getter, setter}
 }
 
-func NewTraceIdVal(id pcommon.TraceID) Val {
+func NewTraceIdVal(id pcommon.TraceID) types.Val {
 	v := &id
 	return NewTraceIdVar(
 		func() pcommon.TraceID { return *v },

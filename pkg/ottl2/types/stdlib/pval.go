@@ -1,18 +1,19 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"fmt"
 	"reflect"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"go.opentelemetry.io/collector/pdata/pcommon" // TODO - define a special type for this as we do lots of conversion
 )
 
 // into/out of this in a real type system.
 // We need to treat this as a special "top type".
-var PvalType = NewPrimitiveType("pcommon.Value")
+var PvalType = types.NewPrimitiveType("pcommon.Value")
 
 type pvalVal pcommon.Value
 
@@ -52,7 +53,7 @@ func (p pvalVal) ConvertTo(typeDesc reflect.Type) (any, error) {
 	return nil, fmt.Errorf("unknown type for pcommon.Value: %v", typeDesc)
 }
 
-func (p pvalVal) Type() Type {
+func (p pvalVal) Type() types.Type {
 	return PvalType
 }
 
@@ -62,7 +63,7 @@ func (p pvalVal) Value() any {
 }
 
 // pvalVal is a Var
-func (p pvalVal) SetValue(v Val) error {
+func (p pvalVal) SetValue(v types.Val) error {
 	switch v.Type() {
 	case PvalType:
 		other := pcommon.Value(v.(pvalVal))
@@ -88,6 +89,6 @@ func (p pvalVal) SetValue(v Val) error {
 	panic(fmt.Sprintf("unimplemented conversion %v to pcommon.Value", v.Type()))
 }
 
-func NewPvalVar(v pcommon.Value) Var {
+func NewPvalVar(v pcommon.Value) types.Var {
 	return pvalVal(v)
 }

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -113,7 +114,7 @@ func TestParser_mathExpressions(t *testing.T) {
 var testStructType = types.NewStructureType(
 	"testStruct",
 	map[string]types.Type{
-		"value": types.StringType,
+		"value": stdlib.StringType,
 	},
 )
 
@@ -134,7 +135,7 @@ func (t *testStruct) ConvertTo(typeDesc reflect.Type) (any, error) {
 }
 
 func (t *testStruct) GetField(field string) types.Val {
-	return types.NewStringVal(t.value)
+	return stdlib.NewStringVal(t.value)
 }
 
 func newTestStruct(value string) types.Val {
@@ -168,7 +169,7 @@ func TestParser_environment(t *testing.T) {
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
 					map[string]types.Type{"some": types.NewStructureType("custom", map[string]types.Type{
-						"value": types.StringType,
+						"value": stdlib.StringType,
 					})},
 					map[string]types.Function{},
 				)
@@ -183,13 +184,13 @@ func TestParser_environment(t *testing.T) {
 			expected: "two",
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					map[string]types.Type{"list": types.ListType},
+					map[string]types.Type{"list": stdlib.ListType},
 					map[string]types.Function{},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {
-				te.WithVariable("list", types.NewListVal([]types.Val{
-					types.NewStringVal("one"), types.NewStringVal("two"),
+				te.WithVariable("list", stdlib.NewListVal([]types.Val{
+					stdlib.NewStringVal("one"), stdlib.NewStringVal("two"),
 				}))
 			}),
 		},
@@ -199,14 +200,14 @@ func TestParser_environment(t *testing.T) {
 			expected: "one",
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					map[string]types.Type{"dict": types.MapType},
+					map[string]types.Type{"dict": stdlib.MapType},
 					map[string]types.Function{},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {
-				te.WithVariable("dict", types.NewMapVal(map[string]types.Val{
-					"hi":  types.NewStringVal("one"),
-					"bye": types.NewStringVal("two"),
+				te.WithVariable("dict", stdlib.NewMapVal(map[string]types.Val{
+					"hi":  stdlib.NewStringVal("one"),
+					"bye": stdlib.NewStringVal("two"),
 				}))
 			}),
 		},
@@ -216,16 +217,16 @@ func TestParser_environment(t *testing.T) {
 			expected: "test",
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					map[string]types.Type{"test": types.StringType},
+					map[string]types.Type{"test": stdlib.StringType},
 					map[string]types.Function{
-						"doSomething": types.NewSimpleFunc("doSomething", 1, func(v []types.Val) types.Val {
+						"doSomething": stdlib.NewSimpleFunc("doSomething", 1, func(v []types.Val) types.Val {
 							return v[0]
 						}),
 					},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {
-				te.WithVariable("test", types.NewStringVal("test"))
+				te.WithVariable("test", stdlib.NewStringVal("test"))
 			}),
 		},
 	}

@@ -1,19 +1,21 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
 
-var StringType = NewPrimitiveType("string")
+var StringType = types.NewPrimitiveType("string")
 
 type stringVal string
 
 // Type implements Val.
-func (s stringVal) Type() Type {
+func (s stringVal) Type() types.Type {
 	return StringType
 }
 
@@ -44,7 +46,7 @@ func (s stringVal) Value() any {
 	return (string)(s)
 }
 
-func NewStringVal(v string) Val {
+func NewStringVal(v string) types.Val {
 	return (stringVal)(v)
 }
 
@@ -57,7 +59,7 @@ func (i string64Var) ConvertTo(typeDesc reflect.Type) (any, error) {
 	panic("unimplemented")
 }
 
-func (i string64Var) SetValue(v Val) error {
+func (i string64Var) SetValue(v types.Val) error {
 	// TODO - check types first...
 	if value, ok := v.Value().(string); ok {
 		i.setter(value)
@@ -65,7 +67,7 @@ func (i string64Var) SetValue(v Val) error {
 	return nil
 }
 
-func (i string64Var) Type() Type {
+func (i string64Var) Type() types.Type {
 	return StringType
 }
 
@@ -73,6 +75,6 @@ func (i string64Var) Value() any {
 	return i.getter()
 }
 
-func NewStringVar(getter func() string, setter func(string)) Var {
+func NewStringVar(getter func() string, setter func(string)) types.Var {
 	return string64Var{getter, setter}
 }

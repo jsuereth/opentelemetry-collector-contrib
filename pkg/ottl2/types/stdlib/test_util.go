@@ -1,9 +1,15 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
-import "fmt" // a type to represent paths.
+import (
+	"fmt" // a type to represent paths.
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/traits"
+)
+
 // Values are oneof name, key or index
 type testPath struct {
 	name  *string
@@ -25,17 +31,17 @@ func (t testPath) String() string {
 }
 
 // Helper to lookup a test path.
-func lookupTestPath(v Val, path []testPath) Val {
+func lookupTestPath(v types.Val, path []testPath) types.Val {
 	result := v
 	for _, p := range path {
 		switch {
 		// We don't have the ability to depend on traits here, so we simulate it.
 		case p.name != nil:
-			result = result.(interface{ GetField(string) Val }).GetField(*p.name)
+			result = result.(traits.StructureAccessible).GetField(*p.name)
 		case p.key != nil:
-			result = result.(interface{ GetKey(string) Val }).GetKey(*p.key)
+			result = result.(traits.KeyAccessable).GetKey(*p.key)
 		case p.index != nil:
-			result = result.(interface{ GetIndex(int64) Val }).GetIndex(*p.index)
+			result = result.(traits.Indexable).GetIndex(*p.index)
 		}
 	}
 	return result

@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 )
 
 // Environment used to parse ASTs
@@ -50,7 +51,7 @@ func (te TransformEnvironment) ResolveName(name string) (types.Val, bool) {
 			return v.value, true
 		}
 	}
-	return types.NilVal, false
+	return stdlib.NilVal, false
 }
 
 // Context we need when evaluating parsed ASTs before turning them into Interpretable.
@@ -106,5 +107,5 @@ func (p ParserEnvironment) ResolveEnum(name string) (types.Val, bool) {
 			}
 		}
 	}
-	return types.NewErrorVal(fmt.Errorf("no such enum: %s", name)), false
+	return stdlib.NewErrorVal(fmt.Errorf("no such enum: %s", name)), false
 }

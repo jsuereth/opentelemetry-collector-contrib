@@ -64,7 +64,7 @@ func (s structureType) GetField(name string) (Type, bool) {
 			return t, true
 		}
 	}
-	return ErrorType, false
+	return nil, false
 }
 
 func NewStructureType(name string, fields map[string]Type) StructType {

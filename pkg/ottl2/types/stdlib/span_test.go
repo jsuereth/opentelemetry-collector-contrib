@@ -1,13 +1,14 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"encoding/hex"
 	"testing"
 	"time"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
@@ -29,7 +30,7 @@ func TestSpanFields(t *testing.T) {
 		name     string
 		path     []testPath
 		orig     any
-		newVal   Val
+		newVal   types.Val
 		expected any
 		expect   func(*testing.T, ptrace.Span)
 	}{
@@ -501,7 +502,7 @@ func TestSpanFields(t *testing.T) {
 			v := lookupTestPath(NewSpanVal(span), tt.path)
 			result := v.Value()
 			assert.Equal(t, tt.orig, result)
-			setter, ok := v.(Var)
+			setter, ok := v.(types.Var)
 			if !ok {
 				assert.Fail(t, "path %v is not mutable", pathString(tt.path))
 			}

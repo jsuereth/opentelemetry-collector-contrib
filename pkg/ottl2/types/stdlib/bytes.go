@@ -1,19 +1,23 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+)
 
 // TODO - treat bytes as an array type?
-var ByteSliceType = NewPrimitiveType("bytes")
+var ByteSliceType = types.NewPrimitiveType("bytes")
 
 type byteSliceVal struct {
 	value []byte
 }
 
 // Type implements Val.
-func (i *byteSliceVal) Type() Type {
+func (i *byteSliceVal) Type() types.Type {
 	return ByteSliceType
 }
 
@@ -26,6 +30,6 @@ func (i *byteSliceVal) Value() any {
 	return ([]byte)(i.value)
 }
 
-func NewByteSliceVal(v []byte) Val {
+func NewByteSliceVal(v []byte) types.Val {
 	return &byteSliceVal{v}
 }

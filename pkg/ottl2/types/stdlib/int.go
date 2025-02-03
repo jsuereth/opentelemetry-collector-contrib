@@ -1,19 +1,21 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
 
-var IntType = NewPrimitiveType("int")
+var IntType = types.NewPrimitiveType("int")
 
 type int64Val int64
 
 // Type implements Val.
-func (i int64Val) Type() Type {
+func (i int64Val) Type() types.Type {
 	return IntType
 }
 
@@ -48,7 +50,7 @@ func (i int64Val) ConvertTo(typeDesc reflect.Type) (any, error) {
 var int64Type = reflect.TypeOf(int64(0))
 
 // Integers are addable
-func (i int64Val) Add(o Val) Val {
+func (i int64Val) Add(o types.Val) types.Val {
 	rhs, err := o.ConvertTo(int64Type)
 	if err != nil {
 		return NewErrorVal(err)
@@ -57,7 +59,7 @@ func (i int64Val) Add(o Val) Val {
 }
 
 // Integers are subtractable
-func (i int64Val) Subtract(o Val) Val {
+func (i int64Val) Subtract(o types.Val) types.Val {
 	rhs, err := o.ConvertTo(int64Type)
 	if err != nil {
 		return NewErrorVal(err)
@@ -66,7 +68,7 @@ func (i int64Val) Subtract(o Val) Val {
 }
 
 // Integers are comparable
-func (i int64Val) Equals(o Val) bool {
+func (i int64Val) Equals(o types.Val) bool {
 	rhs, err := o.ConvertTo(int64Type)
 	if err != nil {
 		return false
@@ -74,7 +76,7 @@ func (i int64Val) Equals(o Val) bool {
 	return ((int64)(i) == rhs.(int64))
 }
 
-func (i int64Val) LessThan(o Val) bool {
+func (i int64Val) LessThan(o types.Val) bool {
 	rhs, err := o.ConvertTo(int64Type)
 	if err != nil {
 		return false
@@ -82,7 +84,7 @@ func (i int64Val) LessThan(o Val) bool {
 	return ((int64)(i) < rhs.(int64))
 }
 
-func NewIntVal(v int64) Val {
+func NewIntVal(v int64) types.Val {
 	return (int64Val)(v)
 }
 
@@ -97,7 +99,7 @@ func (i int64Var) ConvertTo(typeDesc reflect.Type) (any, error) {
 }
 
 // SetValue implements Var.
-func (i int64Var) SetValue(v Val) error {
+func (i int64Var) SetValue(v types.Val) error {
 	// TODO - check types first...
 	if value, ok := v.Value().(int64); ok {
 		i.setter(value)
@@ -106,7 +108,7 @@ func (i int64Var) SetValue(v Val) error {
 }
 
 // Type implements Var.
-func (i int64Var) Type() Type {
+func (i int64Var) Type() types.Type {
 	return int64Type
 }
 
@@ -115,6 +117,6 @@ func (i int64Var) Value() any {
 	return i.getter()
 }
 
-func NewIntVar(getter func() int64, setter func(int64)) Var {
+func NewIntVar(getter func() int64, setter func(int64)) types.Var {
 	return int64Var{getter, setter}
 }

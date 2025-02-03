@@ -1,9 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
-import "reflect" // Allows errors returned from evaluating expressions
+import (
+	"reflect" // Allows errors returned from evaluating expressions
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+)
 
 type errorType struct{}
 
@@ -11,14 +15,14 @@ func (e errorType) Name() string {
 	return "error"
 }
 
-var ErrorType Type = errorType{}
+var ErrorType types.Type = errorType{}
 
 type errorVal struct {
 	e error
 }
 
 // Type implements Val.
-func (e errorVal) Type() Type {
+func (e errorVal) Type() types.Type {
 	return ErrorType
 }
 
@@ -31,6 +35,6 @@ func (e errorVal) Value() any {
 }
 
 // We can return errors within values.
-func NewErrorVal(e error) Val {
+func NewErrorVal(e error) types.Val {
 	return errorVal{e}
 }

@@ -1,17 +1,21 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+)
 
 // TODO - we should use type constructor type here.
-var MapType = NewPrimitiveType("map")
+var MapType = types.NewPrimitiveType("map")
 
-type mapVal[V Val] map[string]V
+type mapVal[V types.Val] map[string]V
 
 // Type implements Val.
-func (m mapVal[V]) Type() Type {
+func (m mapVal[V]) Type() types.Type {
 	return MapType
 }
 
@@ -30,10 +34,10 @@ func (m mapVal[V]) Value() any {
 }
 
 // maps are Keyable
-func (m mapVal[V]) GetKey(key string) Val {
+func (m mapVal[V]) GetKey(key string) types.Val {
 	return m[key]
 }
 
-func NewMapVal[V Val](v map[string]V) Val {
+func NewMapVal[V types.Val](v map[string]V) types.Val {
 	return (mapVal[V])(v)
 }

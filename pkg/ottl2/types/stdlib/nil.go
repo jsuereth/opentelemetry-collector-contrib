@@ -1,20 +1,22 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
 
 // TODO - Nil should be a special type.
-var NilType = NewPrimitiveType("nil")
+var NilType = types.NewPrimitiveType("nil")
 
 type nilVal struct{}
 
 // Type implements Val.
-func (n *nilVal) Type() Type {
+func (n *nilVal) Type() types.Type {
 	return NilType
 }
 
@@ -36,4 +38,4 @@ func (n *nilVal) Value() any {
 	return nil
 }
 
-var NilVal Val = &nilVal{}
+var NilVal types.Val = &nilVal{}

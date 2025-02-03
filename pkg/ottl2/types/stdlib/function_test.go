@@ -1,16 +1,17 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"reflect"
 	"testing"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"github.com/stretchr/testify/assert"
 )
 
-func addAll(args []Val) Val {
+func addAll(args []types.Val) types.Val {
 	result := int64(0)
 	for _, a := range args {
 		v, err := a.ConvertTo(reflect.TypeFor[int64]())
@@ -25,21 +26,21 @@ func addAll(args []Val) Val {
 func TestFunction_CallFunction(t *testing.T) {
 	tests := []struct {
 		name     string
-		f        Function
-		args     []Val
-		named    map[string]Val
-		expected Val
+		f        types.Function
+		args     []types.Val
+		named    map[string]types.Val
+		expected types.Val
 	}{
 		{
 			name: "positional only",
 			f: NewFunc(
 				"test",
 				[]string{"", ""},
-				map[string]Val{},
+				map[string]types.Val{},
 				addAll,
 			),
-			args:     []Val{NewIntVal(1), NewIntVal(1)},
-			named:    map[string]Val{},
+			args:     []types.Val{NewIntVal(1), NewIntVal(1)},
+			named:    map[string]types.Val{},
 			expected: NewIntVal(2),
 		},
 		{
@@ -47,11 +48,11 @@ func TestFunction_CallFunction(t *testing.T) {
 			f: NewFunc(
 				"test",
 				[]string{"lhs", "rhs"},
-				map[string]Val{},
+				map[string]types.Val{},
 				addAll,
 			),
-			args: []Val{},
-			named: map[string]Val{
+			args: []types.Val{},
+			named: map[string]types.Val{
 				"lhs": NewIntVal(1),
 				"rhs": NewIntVal(1),
 			},
@@ -62,14 +63,14 @@ func TestFunction_CallFunction(t *testing.T) {
 			f: NewFunc(
 				"test",
 				[]string{"lhs", "rhs"},
-				map[string]Val{
+				map[string]types.Val{
 					"lhs": NewIntVal(1),
 					"rhs": NewIntVal(1),
 				},
 				addAll,
 			),
-			args:     []Val{},
-			named:    map[string]Val{},
+			args:     []types.Val{},
+			named:    map[string]types.Val{},
 			expected: NewIntVal(2),
 		},
 		{
@@ -77,14 +78,14 @@ func TestFunction_CallFunction(t *testing.T) {
 			f: NewFunc(
 				"test",
 				[]string{"lhs", "rhs"},
-				map[string]Val{
+				map[string]types.Val{
 					"lhs": NewIntVal(1),
 					"rhs": NewIntVal(1),
 				},
 				addAll,
 			),
-			args: []Val{},
-			named: map[string]Val{
+			args: []types.Val{},
+			named: map[string]types.Val{
 				"rhs": NewIntVal(3),
 			},
 			expected: NewIntVal(4),
@@ -94,16 +95,16 @@ func TestFunction_CallFunction(t *testing.T) {
 			f: NewFunc(
 				"test",
 				[]string{"lhs", "rhs"},
-				map[string]Val{
+				map[string]types.Val{
 					"lhs": NewIntVal(1),
 					"rhs": NewIntVal(1),
 				},
 				addAll,
 			),
-			args: []Val{
+			args: []types.Val{
 				NewIntVal(5),
 			},
-			named: map[string]Val{
+			named: map[string]types.Val{
 				"rhs": NewIntVal(3),
 			},
 			expected: NewIntVal(8),
@@ -113,16 +114,16 @@ func TestFunction_CallFunction(t *testing.T) {
 			f: NewFunc(
 				"test",
 				[]string{"", "lhs", "rhs"},
-				map[string]Val{
+				map[string]types.Val{
 					"lhs": NewIntVal(1),
 					"rhs": NewIntVal(4),
 				},
 				addAll,
 			),
-			args: []Val{
+			args: []types.Val{
 				NewIntVal(5),
 			},
-			named: map[string]Val{
+			named: map[string]types.Val{
 				"rhs": NewIntVal(3),
 			},
 			expected: NewIntVal(9),

@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types" // Context to run transformations
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/traits"
 )
 
@@ -111,7 +112,7 @@ func (v *valDrivenEvalContext) String() string {
 // ResolveName implements EvalContext.
 func (v *valDrivenEvalContext) ResolveName(name string) (types.Val, bool) {
 	r := v.source.(traits.StructureAccessible).GetField(name)
-	return r, r.Type() != types.ErrorType
+	return r, r.Type() != stdlib.ErrorType
 }
 
 // Constructs an evaluation context for E.

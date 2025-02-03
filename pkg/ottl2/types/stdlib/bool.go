@@ -1,19 +1,21 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
 	"fmt"
 	"reflect" // Stores literal boolean values
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
 
-var BoolType = NewPrimitiveType("bool")
+var BoolType = types.NewPrimitiveType("bool")
 
 type boolVal bool
 
 // Type implements Val.
-func (b boolVal) Type() Type {
+func (b boolVal) Type() types.Type {
 	return BoolType
 }
 
@@ -46,7 +48,7 @@ func (b boolVal) Value() any {
 	return (bool)(b)
 }
 
-func NewBoolVal(v bool) Val {
+func NewBoolVal(v bool) types.Val {
 	return (boolVal)(v)
 }
 
