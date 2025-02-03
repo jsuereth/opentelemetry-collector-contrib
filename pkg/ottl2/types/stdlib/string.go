@@ -5,7 +5,6 @@ package stdlib // import "github.com/open-telemetry/opentelemetry-collector-cont
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
@@ -20,8 +19,8 @@ func (s stringVal) Type() types.Type {
 }
 
 // Cast strings to valid other types.
-func (s stringVal) ConvertTo(typeDesc reflect.Type) (any, error) {
-	return convertStringTo(string(s), typeDesc)
+func (s stringVal) ConvertTo(t types.Type) (any, error) {
+	return convertStringTo(string(s), t)
 }
 
 func (s stringVal) Value() any {
@@ -37,8 +36,8 @@ type string64Var struct {
 	setter func(string)
 }
 
-func (s string64Var) ConvertTo(typeDesc reflect.Type) (any, error) {
-	return convertStringTo(s.getter(), typeDesc)
+func (s string64Var) ConvertTo(t types.Type) (any, error) {
+	return convertStringTo(s.getter(), t)
 }
 
 func (i string64Var) SetValue(v types.Val) error {
@@ -62,24 +61,11 @@ func NewStringVar(getter func() string, setter func(string)) types.Var {
 	return string64Var{getter, setter}
 }
 
-func convertStringTo(s string, typeDesc reflect.Type) (any, error) {
-	switch typeDesc.Kind() {
-	// TODO - boolean coercion.
-	case reflect.String:
-		return reflect.ValueOf(s).Convert(typeDesc).Interface(), nil
-	case reflect.Ptr:
-		if typeDesc.Elem().Kind() == reflect.String {
-			return &s, nil
-		}
-	case reflect.Interface:
-		sv := s
-		if reflect.TypeOf(sv).Implements(typeDesc) {
-			return sv, nil
-		}
-		if reflect.TypeOf(s).Implements(typeDesc) {
-			return s, nil
-		}
+func convertStringTo(s string, t types.Type) (any, error) {
+	switch t {
+	case StringType:
+		return s, nil
 	}
 	return nil, fmt.Errorf(
-		"unsupported native conversion from string to '%v'", typeDesc)
+		"unsupported native conversion from string to '%v'", t.Name())
 }

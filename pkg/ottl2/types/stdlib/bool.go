@@ -5,8 +5,7 @@ package stdlib // import "github.com/open-telemetry/opentelemetry-collector-cont
 
 import (
 	"fmt"
-	"reflect" // Stores literal boolean values
-
+	// Stores literal boolean values
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
 
@@ -20,28 +19,12 @@ func (b boolVal) Type() types.Type {
 }
 
 // How we coeerce between known types in OTLP.
-func (b boolVal) ConvertTo(typeDesc reflect.Type) (any, error) {
-	switch typeDesc.Kind() {
-	case reflect.Bool:
-		return reflect.ValueOf(b).Convert(typeDesc).Interface(), nil
-	case reflect.Ptr:
-		switch typeDesc {
-		default:
-			if typeDesc.Elem().Kind() == reflect.Bool {
-				p := bool(b)
-				return &p, nil
-			}
-		}
-	case reflect.Interface:
-		bv := b.Value()
-		if reflect.TypeOf(bv).Implements(typeDesc) {
-			return bv, nil
-		}
-		if reflect.TypeOf(b).Implements(typeDesc) {
-			return b, nil
-		}
+func (b boolVal) ConvertTo(t types.Type) (any, error) {
+	switch t {
+	case BoolType:
+		return bool(b), nil
 	}
-	return nil, fmt.Errorf("type conversion error from bool to '%v'", typeDesc)
+	return nil, fmt.Errorf("type conversion error from bool to '%v'", t)
 }
 
 func (b boolVal) Value() any {

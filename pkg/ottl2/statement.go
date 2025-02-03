@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
 )
@@ -34,7 +35,7 @@ func (s Statement[K]) logger() *zap.Logger {
 
 func (s Statement[K]) Execute(ctx context.Context, env *K) (any, bool, error) {
 	realEnv := s.ctx.NewEvalContext(env)
-	condition, err := s.condition.Eval(ctx, realEnv).ConvertTo(reflect.TypeFor[bool]())
+	condition, err := s.condition.Eval(ctx, realEnv).ConvertTo(stdlib.BoolType)
 	defer func() {
 		if s.logger() != nil {
 			s.logger().Debug("TransformContext after statement execution", zap.String("statement", s.origText), zap.Bool("condition matched", condition.(bool)), zap.Any("TransformContext", env))

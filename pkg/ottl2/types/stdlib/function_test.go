@@ -4,7 +4,6 @@
 package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
@@ -14,7 +13,7 @@ import (
 func addAll(args []types.Val) types.Val {
 	result := int64(0)
 	for _, a := range args {
-		v, err := a.ConvertTo(reflect.TypeFor[int64]())
+		v, err := a.ConvertTo(IntType)
 		if err != nil {
 			return NewErrorVal(err)
 		}

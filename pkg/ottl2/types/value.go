@@ -3,14 +3,10 @@
 
 package types // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2"
 
-import (
-	"reflect" // Val interface defines the functions supported by all expression values.
-)
-
 // read-only access to a value.
 type Val interface {
 	// Understands how to convert this type to others.
-	ConvertTo(typeDesc reflect.Type) (any, error)
+	ConvertTo(Type) (any, error)
 
 	// The type of this Val.
 	Type() Type
@@ -20,7 +16,7 @@ type Val interface {
 	Value() any
 }
 
-// A holder for a value that can also be set.
+// read/write access to a value.
 type Var interface {
 	Val
 	// Sets the Value at a location.

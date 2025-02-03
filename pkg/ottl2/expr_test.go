@@ -5,7 +5,6 @@ package ottl2 // import "github.com/open-telemetry/opentelemetry-collector-contr
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
@@ -119,7 +118,7 @@ func TestExpr_math(t *testing.T) {
 func addAll(args []types.Val) types.Val {
 	result := int64(0)
 	for _, a := range args {
-		v, err := a.ConvertTo(reflect.TypeFor[int64]())
+		v, err := a.ConvertTo(stdlib.IntType)
 		if err != nil {
 			return stdlib.NewErrorVal(err)
 		}

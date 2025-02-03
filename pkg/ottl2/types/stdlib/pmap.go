@@ -6,7 +6,6 @@ package stdlib // import "github.com/open-telemetry/opentelemetry-collector-cont
 import (
 	"errors"
 	"fmt"
-	"reflect"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -22,28 +21,12 @@ func (m pmapVal) Type() types.Type {
 	return PmapType
 }
 
-func (m pmapVal) ConvertTo(typeDesc reflect.Type) (any, error) {
-	switch typeDesc.Kind() {
-	case reflect.TypeFor[pcommon.Map]().Kind():
-		return reflect.ValueOf(m).Convert(typeDesc).Interface(), nil
-	case reflect.Ptr:
-		switch typeDesc.Elem().Kind() {
-		case reflect.TypeFor[pcommon.Map]().Kind():
-			v := pcommon.Map(m)
-			p := reflect.New(typeDesc.Elem())
-			p.Elem().Set(reflect.ValueOf(v).Convert(typeDesc.Elem()))
-			return p.Interface(), nil
-		}
-	case reflect.Interface:
-		iv := m.Value()
-		if reflect.TypeOf(iv).Implements(typeDesc) {
-			return iv, nil
-		}
-		if reflect.TypeOf(m).Implements(typeDesc) {
-			return m, nil
-		}
+func (m pmapVal) ConvertTo(t types.Type) (any, error) {
+	switch t {
+	case PmapType:
+		return m.Value(), nil
 	}
-	return nil, fmt.Errorf("unsupported type conversion from 'pcommon.Map' to %v", typeDesc)
+	return nil, fmt.Errorf("unsupported type conversion from 'pcommon.Map' to %s", t.Name())
 }
 
 func (m pmapVal) Value() any {
@@ -63,7 +46,7 @@ func (m pmapVal) GetKey(key string) types.Val {
 
 // SetValue implements Var.
 func (m pmapVal) SetValue(o types.Val) error {
-	other, err := o.ConvertTo(reflect.TypeFor[pcommon.Map]())
+	other, err := o.ConvertTo(PmapType)
 	if err != nil {
 		return err
 	}
@@ -77,10 +60,10 @@ type emptyMapKeyVar struct {
 }
 
 // ConvertTo implements Var.
-func (e *emptyMapKeyVar) ConvertTo(typeDesc reflect.Type) (any, error) {
+func (e *emptyMapKeyVar) ConvertTo(t types.Type) (any, error) {
 	value, ok := e.m.Get(e.key)
 	if ok {
-		return NewPvalVar(value).ConvertTo(typeDesc)
+		return NewPvalVar(value).ConvertTo(t)
 	}
 	return nil, errors.New("cannot convert missing pcommon.Map key")
 }
@@ -90,21 +73,21 @@ func (e *emptyMapKeyVar) SetValue(v types.Val) error {
 	// TODO - check all supported types and write one.
 	switch v.Type() {
 	case BoolType:
-		value, err := v.ConvertTo(reflect.TypeFor[bool]())
+		value, err := v.ConvertTo(BoolType)
 		if err != nil {
 			return err
 		}
 		e.m.PutBool(e.key, value.(bool))
 		return err
 	case IntType:
-		value, err := v.ConvertTo(reflect.TypeFor[int64]())
+		value, err := v.ConvertTo(IntType)
 		if err != nil {
 			return err
 		}
 		e.m.PutInt(e.key, value.(int64))
 		return err
 	case FloatType:
-		value, err := v.ConvertTo(reflect.TypeFor[float64]())
+		value, err := v.ConvertTo(FloatType)
 		if err != nil {
 			return err
 		}

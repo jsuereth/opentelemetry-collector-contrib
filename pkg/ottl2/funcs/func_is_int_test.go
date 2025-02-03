@@ -4,7 +4,6 @@
 package funcs // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/funcs"
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
@@ -66,7 +65,7 @@ func Test_IsInt(t *testing.T) {
 			result := stdlib.CallFunction(isInt, []types.Val{
 				tt.value,
 			}, map[string]types.Val{})
-			v, err := result.ConvertTo(reflect.TypeFor[bool]())
+			v, err := result.ConvertTo(stdlib.BoolType)
 			assert.Nil(t, err)
 			assert.Equal(t, tt.expected, v.(bool))
 		})

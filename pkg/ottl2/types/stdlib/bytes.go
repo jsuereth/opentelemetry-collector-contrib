@@ -4,8 +4,6 @@
 package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
-	"reflect"
-
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
 
@@ -22,7 +20,7 @@ func (i *byteSliceVal) Type() types.Type {
 }
 
 // ConvertTo implements Val.
-func (i *byteSliceVal) ConvertTo(typeDesc reflect.Type) (any, error) {
+func (i *byteSliceVal) ConvertTo(t types.Type) (any, error) {
 	panic("unimplemented")
 }
 

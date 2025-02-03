@@ -5,7 +5,6 @@ package stdlib // import "github.com/open-telemetry/opentelemetry-collector-cont
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
@@ -21,17 +20,13 @@ func (n *nilVal) Type() types.Type {
 }
 
 // ConvertTo implements Val.
-func (n *nilVal) ConvertTo(typeDesc reflect.Type) (any, error) {
-	switch typeDesc.Kind() {
-	case reflect.Bool:
+func (n *nilVal) ConvertTo(t types.Type) (any, error) {
+	switch t {
+	case BoolType:
 		return false, nil
-	case reflect.Ptr:
-		return nil, nil
-	case reflect.Interface:
-		return nil, nil
 	}
 	// If the type conversion isn't supported return an error.
-	return nil, fmt.Errorf("type conversion error from 'nil' to '%v'", typeDesc)
+	return nil, fmt.Errorf("type conversion error from 'nil' to '%v'", t.Name())
 }
 
 func (n *nilVal) Value() any {

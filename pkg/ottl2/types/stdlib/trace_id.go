@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"reflect"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -24,7 +23,7 @@ type traceIDVar struct {
 }
 
 // ConvertTo implements Var.
-func (t traceIDVar) ConvertTo(typeDesc reflect.Type) (any, error) {
+func (t traceIDVar) ConvertTo(tpe types.Type) (any, error) {
 	panic("unimplemented")
 }
 

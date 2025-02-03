@@ -4,7 +4,6 @@
 package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
-	"reflect"
 	"time"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
@@ -15,7 +14,7 @@ var TimeType = types.NewPrimitiveType("time.Time")
 type timeVal time.Time
 
 // ConvertTo implements Val.
-func (t timeVal) ConvertTo(typeDesc reflect.Type) (any, error) {
+func (t timeVal) ConvertTo(tpe types.Type) (any, error) {
 	panic("unimplemented")
 }
 
@@ -38,7 +37,7 @@ type timeVar struct {
 	setter func(time.Time)
 }
 
-func (t timeVar) ConvertTo(typeDesc reflect.Type) (any, error) {
+func (t timeVar) ConvertTo(tpe types.Type) (any, error) {
 	panic("unimplemented")
 }
 

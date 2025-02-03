@@ -4,8 +4,6 @@
 package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
-	"reflect" // Allows errors returned from evaluating expressions
-
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
 
@@ -26,12 +24,16 @@ func (e errorVal) Type() types.Type {
 	return ErrorType
 }
 
-func (e errorVal) ConvertTo(typeDesc reflect.Type) (any, error) {
+func (e errorVal) ConvertTo(t types.Type) (any, error) {
 	return nil, e.e
 }
 
 func (e errorVal) Value() any {
 	return e.e
+}
+
+func (e errorVal) String() string {
+	return e.e.Error()
 }
 
 // We can return errors within values.

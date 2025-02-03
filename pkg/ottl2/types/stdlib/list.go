@@ -4,8 +4,6 @@
 package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
-	"reflect"
-
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
 
@@ -19,7 +17,7 @@ func (i listVal[T]) Type() types.Type {
 	return ListType
 }
 
-func (i listVal[T]) ConvertTo(typeDesc reflect.Type) (any, error) {
+func (i listVal[T]) ConvertTo(t types.Type) (any, error) {
 	panic("unimplemented")
 }
 

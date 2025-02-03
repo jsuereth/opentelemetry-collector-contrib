@@ -5,7 +5,6 @@ package stdlib // import "github.com/open-telemetry/opentelemetry-collector-cont
 
 import (
 	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
@@ -32,7 +31,7 @@ func (s spanVal) Type() types.Type {
 	return SpanType
 }
 
-func (s spanVal) ConvertTo(typeDesc reflect.Type) (any, error) {
+func (s spanVal) ConvertTo(t types.Type) (any, error) {
 	return nil, fmt.Errorf("not implemented for span")
 }
 

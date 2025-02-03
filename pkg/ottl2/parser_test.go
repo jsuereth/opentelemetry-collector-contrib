@@ -5,7 +5,6 @@ package ottl2 // import "github.com/open-telemetry/opentelemetry-collector-contr
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
@@ -130,7 +129,7 @@ func (t *testStruct) Value() any {
 	return *t
 }
 
-func (t *testStruct) ConvertTo(typeDesc reflect.Type) (any, error) {
+func (t *testStruct) ConvertTo(tpe types.Type) (any, error) {
 	panic("unimplemented")
 }
 

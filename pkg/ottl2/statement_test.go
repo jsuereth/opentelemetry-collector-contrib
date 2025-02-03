@@ -6,7 +6,6 @@ package ottl2 // import "github.com/open-telemetry/opentelemetry-collector-contr
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/funcs"
@@ -31,7 +30,7 @@ var testContextType = types.NewStructureType(
 )
 
 // Note: MyContext MUST implement types.Val and traits.StructureAccessible
-func (m *testContext) ConvertTo(typeDesc reflect.Type) (any, error) {
+func (m *testContext) ConvertTo(t types.Type) (any, error) {
 	return nil, fmt.Errorf("unable to convert context")
 }
 
@@ -68,7 +67,7 @@ func (m *testContext) Value() any {
 
 func IsEmptyFunc() types.Function {
 	return stdlib.NewSimpleFunc("IsEmpty", 1, func(args []types.Val) types.Val {
-		r, err := args[0].ConvertTo(reflect.TypeFor[string]())
+		r, err := args[0].ConvertTo(stdlib.StringType)
 		if err != nil {
 			return stdlib.NewErrorVal(err)
 		}

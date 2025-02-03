@@ -6,7 +6,6 @@ package ottl2 // import "github.com/open-telemetry/opentelemetry-collector-contr
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
@@ -277,7 +276,7 @@ type negExpr struct {
 }
 
 func (n *negExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
-	orig, err := n.e.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
+	orig, err := n.e.Eval(ctx, ec).ConvertTo(stdlib.BoolType)
 	if err != nil {
 		return stdlib.NewErrorVal(err)
 	}
@@ -294,14 +293,14 @@ type andExpr struct {
 }
 
 func (a *andExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
-	lhs, err := a.lhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
+	lhs, err := a.lhs.Eval(ctx, ec).ConvertTo(stdlib.BoolType)
 	if err != nil {
 		return stdlib.NewErrorVal(err)
 	}
 	if !lhs.(bool) {
 		return stdlib.NewBoolVal(false)
 	}
-	rhs, err := a.rhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
+	rhs, err := a.rhs.Eval(ctx, ec).ConvertTo(stdlib.BoolType)
 	if err != nil {
 		return stdlib.NewErrorVal(err)
 	}
@@ -318,14 +317,14 @@ type orExpr struct {
 }
 
 func (a *orExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
-	lhs, err := a.lhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
+	lhs, err := a.lhs.Eval(ctx, ec).ConvertTo(stdlib.BoolType)
 	if err != nil {
 		return stdlib.NewErrorVal(err)
 	}
 	if lhs.(bool) {
 		return stdlib.NewBoolVal(true)
 	}
-	rhs, err := a.rhs.Eval(ctx, ec).ConvertTo(reflect.TypeFor[bool]())
+	rhs, err := a.rhs.Eval(ctx, ec).ConvertTo(stdlib.BoolType)
 	if err != nil {
 		return stdlib.NewErrorVal(err)
 	}

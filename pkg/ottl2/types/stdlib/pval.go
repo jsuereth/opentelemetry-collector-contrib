@@ -5,7 +5,6 @@ package stdlib // import "github.com/open-telemetry/opentelemetry-collector-cont
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"go.opentelemetry.io/collector/pdata/pcommon" // TODO - define a special type for this as we do lots of conversion
@@ -18,39 +17,41 @@ var PvalType = types.NewPrimitiveType("pcommon.Value")
 type pvalVal pcommon.Value
 
 // ConvertTo implements Val.
-func (p pvalVal) ConvertTo(typeDesc reflect.Type) (any, error) {
-	// TODO - appropriately case this to zero value for primitives?
-	if typeDesc == nil && pcommon.Value(p).Type() == pcommon.ValueTypeEmpty {
-		return nil, nil
-	}
-	switch typeDesc.Kind() {
-	case reflect.Int64:
-		if pcommon.Value(p).Type() == pcommon.ValueTypeInt {
-			return pcommon.Value(p).Int(), nil
-		} else {
-			return nil, fmt.Errorf("%v is not an integer", p)
-		}
-	case reflect.Bool:
+func (p pvalVal) ConvertTo(t types.Type) (any, error) {
+	switch t {
+	case BoolType:
 		if pcommon.Value(p).Type() == pcommon.ValueTypeBool {
 			return pcommon.Value(p).Bool(), nil
 		} else {
 			return nil, fmt.Errorf("%v is not a boolean", p)
 		}
-	case reflect.Float64:
+	case IntType:
+		if pcommon.Value(p).Type() == pcommon.ValueTypeInt {
+			return pcommon.Value(p).Int(), nil
+		} else {
+			return nil, fmt.Errorf("%v is not an integer", p)
+		}
+	case FloatType:
 		if pcommon.Value(p).Type() == pcommon.ValueTypeDouble {
 			return pcommon.Value(p).Double(), nil
 		} else {
 			return nil, fmt.Errorf("%v is not a double", p)
 		}
-	case reflect.String:
+	case StringType:
 		if pcommon.Value(p).Type() == pcommon.ValueTypeStr {
 			return pcommon.Value(p).Str(), nil
 		} else {
 			return nil, fmt.Errorf("%v is not a string", p)
 		}
+	case NilType:
+		if pcommon.Value(p).Type() == pcommon.ValueTypeEmpty {
+			return nil, nil
+		} else {
+			return nil, fmt.Errorf("%v is not empty", p)
+		}
 	}
 	// TODO - other pvalue types.
-	return nil, fmt.Errorf("unknown type for pcommon.Value: %v", typeDesc)
+	return nil, fmt.Errorf("unknown type for pcommon.Value: %v", t.Name())
 }
 
 func (p pvalVal) Type() types.Type {

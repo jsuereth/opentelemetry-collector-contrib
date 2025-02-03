@@ -4,7 +4,6 @@
 package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
@@ -54,37 +53,37 @@ func TestPval_ConvertTo(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    pcommon.Value
-		typeCast reflect.Type
+		typeCast types.Type
 		expected any
 	}{
 		{
 			name:     "converts to bool",
 			input:    pcommon.NewValueBool(false),
-			typeCast: reflect.TypeFor[bool](),
+			typeCast: BoolType,
 			expected: false,
 		},
 		{
 			name:     "converts to int",
 			input:    pcommon.NewValueInt(42),
-			typeCast: reflect.TypeFor[int64](),
+			typeCast: IntType,
 			expected: int64(42),
 		},
 		{
 			name:     "converts to double",
 			input:    pcommon.NewValueDouble(34.5),
-			typeCast: reflect.TypeFor[float64](),
+			typeCast: FloatType,
 			expected: float64(34.5),
 		},
 		{
 			name:     "converts to string",
 			input:    pcommon.NewValueStr("test val"),
-			typeCast: reflect.TypeFor[string](),
+			typeCast: StringType,
 			expected: "test val",
 		},
 		{
 			name:     "empty return nil",
 			input:    pcommon.NewValueEmpty(),
-			typeCast: reflect.TypeOf(nil),
+			typeCast: NilType,
 			expected: nil,
 		},
 	}

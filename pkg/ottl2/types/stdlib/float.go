@@ -5,7 +5,6 @@ package stdlib // import "github.com/open-telemetry/opentelemetry-collector-cont
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 )
@@ -20,40 +19,21 @@ func (f float64Val) Type() types.Type {
 }
 
 // ConvertTo implements Val.
-func (f float64Val) ConvertTo(typeDesc reflect.Type) (any, error) {
-	switch typeDesc.Kind() {
-	case reflect.Float64:
-		v := float64(f)
-		return reflect.ValueOf(v).Convert(typeDesc).Interface(), nil
-	case reflect.Ptr:
-		switch typeDesc.Elem().Kind() {
-		case reflect.Float64:
-			v := float64(f)
-			p := reflect.New(typeDesc.Elem())
-			p.Elem().Set(reflect.ValueOf(v).Convert(typeDesc.Elem()))
-			return p.Interface(), nil
-		}
-	case reflect.Interface:
-		dv := f.Value()
-		if reflect.TypeOf(dv).Implements(typeDesc) {
-			return dv, nil
-		}
-		if reflect.TypeOf(f).Implements(typeDesc) {
-			return f, nil
-		}
+func (f float64Val) ConvertTo(t types.Type) (any, error) {
+	switch t {
+	case FloatType:
+		return float64(f), nil
 	}
-	return nil, fmt.Errorf("type conversion error from Double to '%v'", typeDesc)
+	return nil, fmt.Errorf("type conversion error from Double to '%v'", t)
 }
 
 func (f float64Val) Value() any {
 	return (float64)(f)
 }
 
-var float64Type = reflect.TypeOf((float64)(0))
-
 // Flaots are addable
 func (f float64Val) Add(o types.Val) types.Val {
-	rhs, err := o.ConvertTo(float64Type)
+	rhs, err := o.ConvertTo(FloatType)
 	if err != nil {
 		return NewErrorVal(err)
 	}
