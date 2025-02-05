@@ -67,12 +67,10 @@ type ParserContext interface {
 	ResolveEnum(name string) (types.Val, bool)
 }
 
-type EnumDefinition map[string]types.Val
-
 type ParserEnvironment struct {
 	variables map[string]types.Type
 	functions map[string]types.Function
-	enums     []EnumDefinition
+	enums     []types.EnumProvider
 }
 
 func (pe ParserEnvironment) String() string {
@@ -81,11 +79,12 @@ func (pe ParserEnvironment) String() string {
 
 func NewParserEnvironemnt(
 	variables map[string]types.Type,
-	functions map[string]types.Function) ParserEnvironment {
+	functions map[string]types.Function,
+	enums []types.EnumProvider) ParserEnvironment {
 	return ParserEnvironment{
 		variables,
 		functions,
-		[]EnumDefinition{},
+		enums,
 	}
 }
 
@@ -100,12 +99,10 @@ func (p ParserEnvironment) ResolveFunction(name string) (types.Function, bool) {
 }
 
 func (p ParserEnvironment) ResolveEnum(name string) (types.Val, bool) {
-	for _, es := range p.enums {
-		for k, v := range es {
-			if k == name {
-				return v, true
-			}
+	for _, provider := range p.enums {
+		if id, ok := provider.ResolveName(name); ok {
+			return stdlib.NewEnumVal(id, provider), true
 		}
 	}
-	return stdlib.NewErrorVal(fmt.Errorf("no such enum: %s", name)), false
+	return stdlib.NewErrorVal(fmt.Errorf("no such enum name: %s", name)), false
 }

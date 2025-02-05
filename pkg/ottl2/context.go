@@ -28,7 +28,7 @@ func NewTransformContext[E any](
 		contextFields[field] = t
 	}
 	result := TransformContext[E]{
-		pCtx:      NewParserEnvironemnt(contextFields, map[string]types.Function{}),
+		pCtx:      NewParserEnvironemnt(contextFields, map[string]types.Function{}, []types.EnumProvider{}),
 		constants: map[string]types.Val{},
 		converter: converter,
 	}
@@ -73,7 +73,7 @@ func WithConstant[E any](name string, value types.Val) Option[E] {
 }
 
 // Registers a complete enumerated type.
-func WithEnum[E any](enumDef EnumDefinition) Option[E] {
+func WithEnum[E any](enumDef types.EnumProvider) Option[E] {
 	return Option[E]{
 		func(c *TransformContext[E]) {
 			c.pCtx.enums = append(c.pCtx.enums, enumDef)

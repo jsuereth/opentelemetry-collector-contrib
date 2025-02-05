@@ -10,10 +10,11 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 func testParser() Parser {
-	return NewParser(NewParserEnvironemnt(map[string]types.Type{}, map[string]types.Function{}))
+	return NewParser(NewParserEnvironemnt(map[string]types.Type{}, map[string]types.Function{}, []types.EnumProvider{}))
 }
 
 func TestParser_literals(t *testing.T) {
@@ -171,6 +172,7 @@ func TestParser_environment(t *testing.T) {
 						"value": stdlib.StringType,
 					})},
 					map[string]types.Function{},
+					[]types.EnumProvider{},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {
@@ -185,6 +187,7 @@ func TestParser_environment(t *testing.T) {
 				return NewParserEnvironemnt(
 					map[string]types.Type{"list": stdlib.ListType},
 					map[string]types.Function{},
+					[]types.EnumProvider{},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {
@@ -201,6 +204,7 @@ func TestParser_environment(t *testing.T) {
 				return NewParserEnvironemnt(
 					map[string]types.Type{"dict": stdlib.MapType},
 					map[string]types.Function{},
+					[]types.EnumProvider{},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {
@@ -222,11 +226,25 @@ func TestParser_environment(t *testing.T) {
 							return v[0]
 						}),
 					},
+					[]types.EnumProvider{},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {
 				te.WithVariable("test", stdlib.NewStringVal("test"))
 			}),
+		},
+		{
+			name:     "enum",
+			input:    "STATUS_CODE_OK",
+			expected: int64(ptrace.StatusCodeOk),
+			penv: newTestParserEnv(func() ParserEnvironment {
+				return NewParserEnvironemnt(
+					map[string]types.Type{},
+					map[string]types.Function{},
+					[]types.EnumProvider{stdlib.StatusCodeEnum},
+				)
+			}),
+			env: newTestEnv(func(te *TransformEnvironment) {}),
 		},
 	}
 	ctx := context.Background()
@@ -239,6 +257,7 @@ func TestParser_environment(t *testing.T) {
 			p = NewParser(NewParserEnvironemnt(
 				map[string]types.Type{},
 				map[string]types.Function{},
+				[]types.EnumProvider{},
 			))
 		}
 		if tt.env != nil {
@@ -320,6 +339,7 @@ func TestParser_conditions(t *testing.T) {
 			p = NewParser(NewParserEnvironemnt(
 				map[string]types.Type{},
 				map[string]types.Function{},
+				[]types.EnumProvider{},
 			))
 		}
 		if tt.env != nil {

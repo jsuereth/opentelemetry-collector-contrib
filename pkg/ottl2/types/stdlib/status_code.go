@@ -14,11 +14,11 @@ type statusCodeEnum struct{}
 func (s statusCodeEnum) FindName(id int64) (string, bool) {
 	switch ptrace.StatusCode(id) {
 	case ptrace.StatusCodeUnset:
-		return "Unset", true
+		return "STATUS_CODE_UNSET", true
 	case ptrace.StatusCodeOk:
-		return "Ok", true
+		return "STATUS_CODE_OK", true
 	case ptrace.StatusCodeError:
-		return "Error", true
+		return "STATUS_CODE_ERROR", true
 	}
 	return "", false
 }
@@ -26,11 +26,11 @@ func (s statusCodeEnum) FindName(id int64) (string, bool) {
 // ResolveName implements types.EnumProvider.
 func (s statusCodeEnum) ResolveName(name string) (int64, bool) {
 	switch name {
-	case "Unset":
+	case "STATUS_CODE_UNSET":
 		return int64(ptrace.StatusCodeUnset), true
-	case "Ok":
+	case "STATUS_CODE_OK":
 		return int64(ptrace.StatusCodeOk), true
-	case "Error":
+	case "STATUS_CODE_ERROR":
 		return int64(ptrace.StatusCodeError), true
 	}
 	return 0, false
