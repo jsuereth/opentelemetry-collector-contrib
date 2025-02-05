@@ -452,7 +452,7 @@ func TestSpanFields(t *testing.T) {
 			name:   "status code",
 			path:   []testPath{fieldPath("status"), fieldPath("code")},
 			orig:   int64(ptrace.StatusCodeOk),
-			newVal: NewIntVal(int64(ptrace.StatusCodeError)),
+			newVal: NewStatusCodeVal(ptrace.StatusCodeError),
 			expect: func(t *testing.T, s ptrace.Span) {
 				assert.Equal(t, ptrace.StatusCodeError, s.Status().Code())
 			},

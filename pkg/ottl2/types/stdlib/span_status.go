@@ -11,7 +11,7 @@ import (
 )
 
 var SpanStatusType = types.NewStructureType("ptrace.Status", map[string]types.Type{
-	"code":    IntType,
+	"code":    StatusCodeType,
 	"message": StringType,
 })
 
@@ -47,14 +47,14 @@ func (s spanStatusVar) Value() any {
 func (s spanStatusVar) GetField(field string) types.Val {
 	switch field {
 	case "code":
-		return NewIntVar(
-			func() int64 {
-				return int64(s.getter().Code())
+		return NewStatusCodeVar(
+			func() ptrace.StatusCode {
+				return s.getter().Code()
 			},
-			func(i int64) {
+			func(v ptrace.StatusCode) {
 				// TODO - less copying
 				current := s.getter()
-				current.SetCode(ptrace.StatusCode(i))
+				current.SetCode(v)
 				s.setter(current)
 			},
 		)
