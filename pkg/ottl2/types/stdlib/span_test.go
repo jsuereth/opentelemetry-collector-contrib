@@ -113,27 +113,31 @@ func TestSpanFields(t *testing.T) {
 			newVal:   NewStringVal("cat"),
 			expected: "cat",
 		},
-		// {
-		// 	name:     "kind",
-		// 	path:     []testPath{"kind"},
-		// 	orig:     int64(2),
-		// 	newVal:   NewIntVal(int64(3)),
-		// 	expected: ptrace.SpanKindClient,
-		// },
-		// {
-		// 	name:     "string kind",
-		// 	path:     []testPath{"kind", "string"},
-		// 	orig:     "Server",
-		// 	newVal:   NewStringVal("Client"),
-		// 	expected: ptrace.SpanKindClient,
-		// },
-		// {
-		// 	name:     "deprecated string kind",
-		// 	path:     []testPath{"kind", "deprecated_string"},
-		// 	orig:     "SPAN_KIND_SERVER",
-		// 	newVal:   NewStringVal("SPAN_KIND_CLIENT"),
-		// 	expected: ptrace.SpanKindClient,
-		// },
+		{
+			name:     "kind",
+			path:     []testPath{fieldPath("kind")},
+			orig:     int64(2),
+			newVal:   NewIntVal(int64(3)),
+			expected: int64(ptrace.SpanKindClient),
+		},
+		{
+			name:   "string kind",
+			path:   []testPath{fieldPath("kind"), fieldPath("string")},
+			orig:   "Server",
+			newVal: NewStringVal("Client"),
+			expect: func(t *testing.T, s ptrace.Span) {
+				assert.Equal(t, ptrace.SpanKindClient, s.Kind())
+			},
+		},
+		{
+			name:   "deprecated string kind",
+			path:   []testPath{fieldPath("kind"), fieldPath("deprecated_string")},
+			orig:   "SPAN_KIND_SERVER",
+			newVal: NewStringVal("SPAN_KIND_CLIENT"),
+			expect: func(t *testing.T, s ptrace.Span) {
+				assert.Equal(t, ptrace.SpanKindClient, s.Kind())
+			},
+		},
 		{
 			name:   "start_time_unix_nano",
 			path:   []testPath{fieldPath("start_time_unix_nano")},

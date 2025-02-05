@@ -45,6 +45,18 @@ func (e enumVal) Value() any {
 	return e.v
 }
 
+// TODO - Is this actually something we want consistently across enums?
+// GetField implements StructureAccessible
+func (e enumVal) GetField(field string) types.Val {
+	if field == "string" {
+		// Convert the value to  its name.
+		if name, ok := e.provider.FindName(e.v); ok {
+			return NewStringVal(name)
+		}
+	}
+	return NewErrorVal(fmt.Errorf("invalid field on enum: %s", field))
+}
+
 func NewEnumVal(id int64, e types.EnumProvider) types.Val {
 	return enumVal{id, e}
 }

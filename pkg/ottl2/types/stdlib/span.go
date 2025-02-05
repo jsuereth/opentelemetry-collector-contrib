@@ -91,6 +91,14 @@ func (s spanVal) GetField(field string) types.Val {
 			},
 		)
 	case "kind":
+		return NewSpanKindVar(
+			func() ptrace.SpanKind {
+				return ptrace.Span(s).Kind()
+			},
+			func(sk ptrace.SpanKind) {
+				ptrace.Span(s).SetKind(sk)
+			},
+		)
 	case "start_time_unix_nano":
 		return NewIntVar(
 			func() int64 {
