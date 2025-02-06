@@ -16,6 +16,7 @@ var SpanType = types.NewStructureType("span", map[string]types.Type{
 	"name":                     StringType,
 	"span_id":                  SpanIDType,
 	"trace_id":                 TraceIDType,
+	"parent_span_id":           SpanIDType,
 	"trace_state":              TraceStateType,
 	"start_time":               TimeType,
 	"start_time_unix_nano":     IntType,
@@ -25,6 +26,10 @@ var SpanType = types.NewStructureType("span", map[string]types.Type{
 	"dropped_events_count":     IntType,
 	"dropped_links_count":      IntType,
 	"status":                   SpanStatusType,
+	"kind":                     SpanKindType,
+	"attributes":               PmapType,
+	"links":                    SpanLinkSliceType,
+	// "events":
 })
 
 type spanVal ptrace.Span
@@ -149,6 +154,7 @@ func (s spanVal) GetField(field string) types.Val {
 			func(v int64) { ptrace.Span(s).SetDroppedEventsCount(uint32(v)) },
 		)
 	case "links":
+		return NewSpanLinkSliceVar(ptrace.Span(s).Links())
 	case "dropped_links_count":
 		return NewIntVar(
 			func() int64 { return int64(ptrace.Span(s).DroppedLinksCount()) },

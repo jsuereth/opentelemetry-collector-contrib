@@ -18,15 +18,121 @@ type pvalVal pcommon.Value
 
 // ConvertTo implements Val.
 func (p pvalVal) ConvertTo(t types.Type) (any, error) {
+	return convertPval(pcommon.Value(p), t)
+}
+
+func (p pvalVal) Type() types.Type {
+	return PvalType
+}
+
+func (p pvalVal) Value() any {
+	return valueOf(pcommon.Value(p))
+}
+
+// pvalVal is a Var
+func (p pvalVal) SetValue(v types.Val) error {
+	return setPValue(pcommon.Value(p), v)
+}
+
+// GetIndex implements traits.Indexable
+func (s pvalVal) GetIndex(index int64) types.Val {
+	// TODO - deal with all slice types
+	idx := int(index)
+	if idx < pcommon.Value(s).Slice().Len() {
+		return NewPvalVar(pcommon.Value(s).Slice().At(int(index)))
+	} else {
+		return NewLazyPval(func() pcommon.Value {
+			for pcommon.Value(s).Slice().Len() < idx {
+				pcommon.Value(s).Slice().AppendEmpty()
+			}
+			return pcommon.Value(s).Slice().At(idx)
+		})
+	}
+}
+
+// GetIndex implements traits.KeyAccessable
+func (s pvalVal) GetKey(key string) types.Val {
+	// TODO - better error message.
+	if r, ok := pcommon.Value(s).Map().Get(key); ok {
+		return NewPvalVar(r)
+	}
+	// Create lazy key.
+	return NewLazyPval(func() pcommon.Value {
+		return pcommon.Value(s).Map().PutEmpty(key)
+	})
+}
+
+func NewPvalVar(v pcommon.Value) types.Var {
+	return pvalVal(v)
+}
+
+type pvalVar func() pcommon.Value
+
+// ConvertTo implements types.Var.
+func (p pvalVar) ConvertTo(t types.Type) (any, error) {
+	return convertPval((func() pcommon.Value)(p)(), t)
+}
+
+// SetValue implements types.Var.
+func (p pvalVar) SetValue(v types.Val) error {
+	return setPValue((func() pcommon.Value)(p)(), v)
+}
+
+func (s pvalVar) GetIndex(index int64) types.Val {
+	return NewLazyPval(func() pcommon.Value {
+		v := (func() pcommon.Value)(s)()
+		// TODO - deal with bytes and other slices...
+		if v.Type() != pcommon.ValueTypeSlice {
+			// Should we only do this on empty values?
+			v.SetEmptySlice()
+		}
+		idx := int(index)
+		for v.Slice().Len() <= idx {
+			v.Slice().AppendEmpty()
+		}
+		return v.Slice().At(idx)
+	})
+}
+
+func (s pvalVar) GetKey(key string) types.Val {
+	return NewLazyPval(func() pcommon.Value {
+		v := (func() pcommon.Value)(s)()
+		if v.Type() != pcommon.ValueTypeMap {
+			// Should we only do this on empty values?
+			v.SetEmptyMap()
+		}
+		if r, ok := v.Map().Get(key); ok {
+			return r
+		}
+		return v.Map().PutEmpty(key)
+	})
+}
+
+// Type implements types.Var.
+func (p pvalVar) Type() types.Type {
+	return PvalType
+}
+
+// Value implements types.Var.
+func (p pvalVar) Value() any {
+	return valueOf((func() pcommon.Value)(p)())
+}
+
+// Constructs a new Pval type that will generate its "slot" on demand by calling the method.
+func NewLazyPval(v func() pcommon.Value) types.Var {
+	return pvalVar(v)
+}
+
+func convertPval(p pcommon.Value, t types.Type) (any, error) {
 	switch t {
 	case BoolType:
-		if pcommon.Value(p).Type() == pcommon.ValueTypeBool {
-			return pcommon.Value(p).Bool(), nil
+		if p.Type() == pcommon.ValueTypeBool {
+			return p.Bool(), nil
 		} else {
 			return nil, fmt.Errorf("%v is not a boolean", p)
 		}
 	case IntType:
-		if pcommon.Value(p).Type() == pcommon.ValueTypeInt {
+		if p.Type() == pcommon.ValueTypeInt {
 			return pcommon.Value(p).Int(), nil
 		} else {
 			return nil, fmt.Errorf("%v is not an integer", p)
@@ -49,19 +155,21 @@ func (p pvalVal) ConvertTo(t types.Type) (any, error) {
 		} else {
 			return nil, fmt.Errorf("%v is not empty", p)
 		}
+	case SliceType:
+		if pcommon.Value(p).Type() == pcommon.ValueTypeSlice {
+			return pcommon.Value(p).Slice(), nil
+		} else {
+			return nil, fmt.Errorf("%v is not a slice", p)
+		}
 	}
 	// TODO - other pvalue types.
 	return nil, fmt.Errorf("unknown type for pcommon.Value: %v", t.Name())
 }
 
-func (p pvalVal) Type() types.Type {
-	return PvalType
-}
-
-func (p pvalVal) Value() any {
-	switch pcommon.Value(p).Type() {
+func valueOf(p pcommon.Value) any {
+	switch p.Type() {
 	case pcommon.ValueTypeBool:
-		return pcommon.Value(p).Bool()
+		return p.Bool()
 	case pcommon.ValueTypeBytes:
 		return pcommon.Value(p).Bytes()
 	case pcommon.ValueTypeDouble:
@@ -82,8 +190,7 @@ func (p pvalVal) Value() any {
 	}
 }
 
-// pvalVal is a Var
-func (p pvalVal) SetValue(v types.Val) error {
+func setPValue(p pcommon.Value, v types.Val) error {
 	switch v.Type() {
 	case PvalType:
 		other := pcommon.Value(v.(pvalVal))
@@ -107,11 +214,10 @@ func (p pvalVal) SetValue(v types.Val) error {
 	case ByteSliceType:
 		pcommon.Value(p).SetEmptyBytes().FromRaw(v.Value().([]byte))
 		return nil
+	case SliceType:
+		pcommon.Value(p).Slice().FromRaw(v.Value().(pcommon.Slice).AsRaw())
+		return nil
 	}
 	// TODO - other types...
 	panic(fmt.Sprintf("unimplemented conversion %v to pcommon.Value", v.Type()))
-}
-
-func NewPvalVar(v pcommon.Value) types.Var {
-	return pvalVal(v)
 }

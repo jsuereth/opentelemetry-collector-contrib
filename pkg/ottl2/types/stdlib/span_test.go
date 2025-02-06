@@ -25,6 +25,8 @@ func TestSpanFields(t *testing.T) {
 	refSpan := createSpan()
 	newAttrs := pcommon.NewMap()
 	newAttrs.PutStr("hello", "world")
+	newLinks := ptrace.NewSpanLinkSlice()
+	newLinks.AppendEmpty().SetSpanID(spanID2)
 
 	tests := []struct {
 		name     string
@@ -263,44 +265,48 @@ func TestSpanFields(t *testing.T) {
 		// 		span.Attributes().PutEmptySlice("arr_str").AppendEmpty().SetStr("new")
 		// 	},
 		// },
-		// {
-		// 	name: "attributes array bool",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("arr_bool"),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig: func() pcommon.Slice {
-		// 		val, _ := refSpan.Attributes().Get("arr_bool")
-		// 		return val.Slice()
-		// 	}(),
-		// 	newVal: []bool{false},
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Attributes().PutEmptySlice("arr_bool").AppendEmpty().SetBool(false)
-		// 	},
-		// },
-		// {
-		// 	name: "attributes array int",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("arr_int"),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig: func() pcommon.Slice {
-		// 		val, _ := refSpan.Attributes().Get("arr_int")
-		// 		return val.Slice()
-		// 	}(),
-		// 	newVal: []int64{20},
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Attributes().PutEmptySlice("arr_int").AppendEmpty().SetInt(20)
-		// 	},
-		// },
+		{
+			name: "attributes array bool",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("arr_bool"),
+			},
+			orig: func() pcommon.Slice {
+				val, _ := refSpan.Attributes().Get("arr_bool")
+				return val.Slice()
+			}(),
+			newVal: NewSliceVar(func() pcommon.Slice {
+				r := pcommon.NewSlice()
+				r.FromRaw([]any{false})
+				return r
+			}()),
+			expect: func(t *testing.T, s ptrace.Span) {
+				v, ok := s.Attributes().Get("arr_bool")
+				assert.True(t, ok)
+				assert.ElementsMatch(t, []any{false}, v.Slice().AsRaw())
+			},
+		},
+		{
+			name: "attributes array int",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("arr_int"),
+			},
+			orig: func() pcommon.Slice {
+				val, _ := refSpan.Attributes().Get("arr_int")
+				return val.Slice()
+			}(),
+			newVal: NewSliceVar(func() pcommon.Slice {
+				r := pcommon.NewSlice()
+				r.FromRaw([]any{int64(20)})
+				return r
+			}()),
+			expect: func(t *testing.T, s ptrace.Span) {
+				v, ok := s.Attributes().Get("arr_int")
+				assert.True(t, ok)
+				assert.ElementsMatch(t, []any{int64(20)}, v.Slice().AsRaw())
+			},
+		},
 		// {
 		// 	name: "attributes array float",
 		// 	path: &TestPath[*spanContext]{
@@ -339,59 +345,48 @@ func TestSpanFields(t *testing.T) {
 		// 		span.Attributes().PutEmptySlice("arr_bytes").AppendEmpty().SetEmptyBytes().FromRaw([]byte{9, 6, 4})
 		// 	},
 		// },
-		// {
-		// 	name: "attributes nested",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("slice"),
-		// 			},
-		// 			&TestKey[*spanContext]{
-		// 				I: ottltest.Intp(0),
-		// 			},
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("map"),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig: func() string {
-		// 		val, _ := refSpan.Attributes().Get("slice")
-		// 		val, _ = val.Slice().At(0).Map().Get("map")
-		// 		return val.Str()
-		// 	}(),
-		// 	newVal: "new",
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Attributes().PutEmptySlice("slice").AppendEmpty().SetEmptyMap().PutStr("map", "new")
-		// 	},
-		// },
-		// {
-		// 	name: "attributes nested new values",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("new"),
-		// 			},
-		// 			&TestKey[*spanContext]{
-		// 				I: ottltest.Intp(2),
-		// 			},
-		// 			&TestKey[*spanContext]{
-		// 				I: ottltest.Intp(0),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig: func() any {
-		// 		return nil
-		// 	}(),
-		// 	newVal: "new",
-		// 	modified: func(span ptrace.Span) {
-		// 		s := span.Attributes().PutEmptySlice("new")
-		// 		s.AppendEmpty()
-		// 		s.AppendEmpty()
-		// 		s.AppendEmpty().SetEmptySlice().AppendEmpty().SetStr("new")
-		// 	},
-		// },
+		{
+			name: "attributes nested",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("slice"),
+				indexPath(0),
+				keyPath("map"),
+			},
+			orig: func() string {
+				val, _ := refSpan.Attributes().Get("slice")
+				val, _ = val.Slice().At(0).Map().Get("map")
+				return val.Str()
+			}(),
+			newVal: NewStringVal("new"),
+			expect: func(t *testing.T, s ptrace.Span) {
+				attr, ok := s.Attributes().Get("slice")
+				assert.True(t, ok)
+				assert.NotEmpty(t, attr.Slice())
+				result, ok := attr.Slice().At(0).Map().Get("map")
+				assert.True(t, ok)
+				assert.Equal(t, "new", result.AsString())
+			},
+		},
+		{
+			name: "attributes nested new values",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("new"),
+				indexPath(2),
+				indexPath(0),
+			},
+			orig: func() any {
+				return nil
+			}(),
+			newVal: NewStringVal("new"),
+			expect: func(t *testing.T, s ptrace.Span) {
+				attr, ok := s.Attributes().Get("new")
+				assert.True(t, ok)
+				assert.NotEmpty(t, attr.Slice())
+				assert.Equal(t, "new", attr.Slice().At(2).Slice().At(0).AsString())
+			},
+		},
 		{
 			name:     "dropped_attributes_count",
 			path:     []testPath{fieldPath("dropped_attributes_count")},
@@ -418,18 +413,15 @@ func TestSpanFields(t *testing.T) {
 			newVal:   NewIntVal(10),
 			expected: int64(10),
 		},
-		// {
-		// 	name:   "links",
-		// 	path:   []string{"links"},
-		// 	orig:   refSpan.Links(),
-		// 	newVal: newLinks,
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Links().RemoveIf(func(_ ptrace.SpanLink) bool {
-		// 			return true
-		// 		})
-		// 		newLinks.CopyTo(span.Links())
-		// 	},
-		// },
+		{
+			name:   "links",
+			path:   []testPath{fieldPath("links")},
+			orig:   refSpan.Links(),
+			newVal: NewSpanLinkSliceVar(newLinks),
+			expect: func(t *testing.T, s ptrace.Span) {
+				assert.Equal(t, newLinks, s.Links())
+			},
+		},
 		{
 			name:     "dropped_links_count",
 			path:     []testPath{fieldPath("dropped_links_count")},
