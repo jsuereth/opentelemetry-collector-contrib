@@ -241,30 +241,40 @@ func TestSpanFields(t *testing.T) {
 				assert.Equal(t, []byte{2, 3, 4}, v.Bytes().AsRaw())
 			},
 		},
-		// {
-		// 	name: "attributes array empty",
-		// 	path: []testPath{
-		// 		fieldPath("attributes"),
-		// 		keyPath("arr_empty"),
-		// 	},
-		// 	orig:   pcommon.NewByteSlice(),
-		// 	newVal: NewByteSliceVal([]byte{}),
-		// 	expect: func(t *testing.T, s ptrace.Span) {
-		// 		// no-op ?
-		// 	},
-		// },
-		// {
-		// 	name: "attributes array string",
-		// 	path: []testPath{
-		// 		fieldPath("attributes"),
-		// 		keyPath("arr_str"),
-		// 	},
-		// 	orig:   pcommon.NewStringSlice(),
-		// 	newVal: []string{"new"},
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Attributes().PutEmptySlice("arr_str").AppendEmpty().SetStr("new")
-		// 	},
-		// },
+		{
+			name: "attributes array empty",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("arr_empty"),
+			},
+			orig:   pcommon.NewSlice(),
+			newVal: NewSliceVar(pcommon.NewSlice()),
+			expect: func(t *testing.T, s ptrace.Span) {
+				// no-op
+			},
+		},
+		{
+			name: "attributes array string",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("arr_str"),
+			},
+			orig: func() pcommon.Slice {
+				val, _ := refSpan.Attributes().Get("arr_str")
+				return val.Slice()
+			}(),
+			newVal: NewSliceVar(func() pcommon.Slice {
+				r := pcommon.NewSlice()
+				r.AppendEmpty().SetStr("new")
+				return r
+			}()),
+			expect: func(t *testing.T, s ptrace.Span) {
+				v, ok := s.Attributes().Get("arr_str")
+				assert.True(t, ok)
+				assert.Equal(t, "new", v.Slice().At(0).AsString())
+
+			},
+		},
 		{
 			name: "attributes array bool",
 			path: []testPath{
@@ -307,44 +317,49 @@ func TestSpanFields(t *testing.T) {
 				assert.ElementsMatch(t, []any{int64(20)}, v.Slice().AsRaw())
 			},
 		},
-		// {
-		// 	name: "attributes array float",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("arr_float"),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig: func() pcommon.Slice {
-		// 		val, _ := refSpan.Attributes().Get("arr_float")
-		// 		return val.Slice()
-		// 	}(),
-		// 	newVal: []float64{2.0},
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Attributes().PutEmptySlice("arr_float").AppendEmpty().SetDouble(2.0)
-		// 	},
-		// },
-		// {
-		// 	name: "attributes array bytes",
-		// 	path: &TestPath[*spanContext]{
-		// 		N: "attributes",
-		// 		KeySlice: []ottl.Key[*spanContext]{
-		// 			&TestKey[*spanContext]{
-		// 				S: ottltest.Strp("arr_bytes"),
-		// 			},
-		// 		},
-		// 	},
-		// 	orig: func() pcommon.Slice {
-		// 		val, _ := refSpan.Attributes().Get("arr_bytes")
-		// 		return val.Slice()
-		// 	}(),
-		// 	newVal: [][]byte{{9, 6, 4}},
-		// 	modified: func(span ptrace.Span) {
-		// 		span.Attributes().PutEmptySlice("arr_bytes").AppendEmpty().SetEmptyBytes().FromRaw([]byte{9, 6, 4})
-		// 	},
-		// },
+		{
+			name: "attributes array float",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("arr_float"),
+			},
+			orig: func() pcommon.Slice {
+				val, _ := refSpan.Attributes().Get("arr_float")
+				return val.Slice()
+			}(),
+			newVal: NewSliceVar(func() pcommon.Slice {
+				s := pcommon.NewSlice()
+				s.AppendEmpty().SetDouble(2.0)
+				return s
+			}()),
+			expect: func(t *testing.T, s ptrace.Span) {
+				a, ok := s.Attributes().Get("arr_float")
+				assert.True(t, ok)
+				assert.Equal(t, []any{2.0}, a.Slice().AsRaw())
+			},
+		},
+		{
+			name: "attributes array bytes",
+			path: []testPath{
+				fieldPath("attributes"),
+				keyPath("arr_bytes"),
+			},
+			orig: func() pcommon.Slice {
+				val, _ := refSpan.Attributes().Get("arr_bytes")
+				return val.Slice()
+			}(),
+
+			newVal: NewSliceVar(func() pcommon.Slice {
+				s := pcommon.NewSlice()
+				s.AppendEmpty().SetEmptyBytes().FromRaw([]byte{9, 6, 4})
+				return s
+			}()),
+			expect: func(t *testing.T, s ptrace.Span) {
+				a, ok := s.Attributes().Get("arr_bytes")
+				assert.True(t, ok)
+				assert.Equal(t, []byte{9, 6, 4}, a.Slice().At(0).Bytes().AsRaw())
+			},
+		},
 		{
 			name: "attributes nested",
 			path: []testPath{
