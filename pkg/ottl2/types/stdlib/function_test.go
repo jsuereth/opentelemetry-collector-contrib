@@ -4,6 +4,7 @@
 package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
@@ -127,12 +128,100 @@ func TestFunction_CallFunction(t *testing.T) {
 			},
 			expected: NewIntVal(9),
 		},
+		{
+			name: "reflect, positional",
+			f:    NewExampleFunc(),
+			args: []types.Val{
+				NewIntVal(3),
+				NewIntVal(2),
+			},
+			named:    map[string]types.Val{},
+			expected: NewIntVal(1),
+		},
+		{
+			name: "reflect, named",
+			f:    NewExampleFunc(),
+			args: []types.Val{},
+			named: map[string]types.Val{
+				"Left":  NewIntVal(3),
+				"Right": NewIntVal(2),
+			},
+			expected: NewIntVal(1),
+		},
+		{
+			name: "reflect, named and posiitonal",
+			f:    NewExampleFunc(),
+			args: []types.Val{
+				NewIntVal(3),
+			},
+			named: map[string]types.Val{
+				"Right": NewIntVal(2),
+			},
+			expected: NewIntVal(1),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := CallFunction(tt.f, tt.args, tt.named)
+			result := callFunction(tt.f, tt.args, tt.named)
+			if result.Type() == ErrorType {
+				assert.Fail(t, "Found error: %v", result)
+			}
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+// Calls a function using its default and named arguments. (for testing only)
+func callFunction(f types.Function, pos []types.Val, named map[string]types.Val) types.Val {
+	args, err := createArgs(f, pos, named)
+	if err != nil {
+		return NewErrorVal(err)
+	}
+	return f.Call(args)
+}
+
+// Takes a function and create the official argument set.
+// This will take positional and named arguments, union with default arguments
+// and return a purely positional argument list.
+func createArgs(f types.Function, pos []types.Val, named map[string]types.Val) ([]types.Val, error) {
+	defaults := f.DefaultArgs()
+	names := f.ArgNames()
+	result := make([]types.Val, len(names))
+	for i, name := range names {
+		if i < len(pos) {
+			result[i] = pos[i]
+		} else if v, ok := named[name]; name != "" && ok {
+			result[i] = v
+		} else if v, ok := defaults[name]; name != "" && ok {
+			result[i] = v
+		} else {
+			if name != "" {
+				return result, fmt.Errorf("invalid argument list for %s, missing paramater #%d: %s", f.Name(), i, name)
+			} else {
+				return result, fmt.Errorf("invalid argument list for %s, missing paramater #%d", f.Name(), i)
+			}
+		}
+	}
+	return result, nil
+}
+
+type ExampleFuncArgs struct {
+	Left  int64
+	Right int64
+}
+
+func NewExampleFunc() types.Function {
+	return NewReflectFunc("-", &ExampleFuncArgs{}, func(a Arguments) types.Val {
+		args, ok := a.(*ExampleFuncArgs)
+		if !ok {
+			return NewErrorVal(fmt.Errorf("function should take pointer to ExampleFuncArgs, found %v", a))
+		}
+		return NewIntVal(args.Left - args.Right)
+	})
+}
+
+func TestReflect_ArgumentNames(t *testing.T) {
+	f := NewExampleFunc()
+	assert.ElementsMatch(t, []string{"Left", "Right"}, f.ArgNames())
 }

@@ -62,9 +62,9 @@ func Test_IsInt(t *testing.T) {
 	isInt := NewIsIntFunc()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := stdlib.CallFunction(isInt, []types.Val{
+			result := isInt.Call([]types.Val{
 				tt.value,
-			}, map[string]types.Val{})
+			})
 			v, err := result.ConvertTo(stdlib.BoolType)
 			assert.Nil(t, err)
 			assert.Equal(t, tt.expected, v.(bool))
