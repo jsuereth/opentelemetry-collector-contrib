@@ -9,6 +9,7 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 func addAll(args []types.Val) types.Val {
@@ -159,6 +160,32 @@ func TestFunction_CallFunction(t *testing.T) {
 			},
 			expected: NewIntVal(1),
 		},
+		{
+			name:     "reflect, defaults",
+			f:        NewExampleOptionalFunc(),
+			args:     []types.Val{},
+			named:    map[string]types.Val{},
+			expected: NewIntVal(2),
+		},
+		{
+			name: "reflect, defaults and named",
+			f:    NewExampleOptionalFunc(),
+			args: []types.Val{},
+			named: map[string]types.Val{
+				"Right": NewIntVal(2),
+			},
+			expected: NewIntVal(4),
+		},
+		{
+			name: "reflect, positional",
+			f:    NewExampleOptionalFunc(),
+			args: []types.Val{
+				NewIntVal(3),
+				NewIntVal(3),
+			},
+			named:    map[string]types.Val{},
+			expected: NewIntVal(6),
+		},
 	}
 
 	for _, tt := range tests {
@@ -223,25 +250,43 @@ func TestReflect_ArgumentNames(t *testing.T) {
 }
 
 type ExampleOptionalFuncArgs struct {
-	Left  Optional[int64]
-	Right Optional[int64]
+	Left  int64 `ottl:"default=2"`
+	Right int64 `ottl:"default=0"`
 }
 
 func NewExampleOptionalFunc() types.Function {
-	return NewReflectFunc("-", &ExampleOptionalFuncArgs{}, func(args *ExampleOptionalFuncArgs) types.Val {
-		result := int64(0)
-		if !args.Left.IsEmpty() {
-			result += args.Left.Get()
-		}
-		if !args.Right.IsEmpty() {
-			result += args.Right.Get()
-		}
-		return NewIntVal(result)
+	return NewReflectFunc("+", &ExampleOptionalFuncArgs{}, func(args *ExampleOptionalFuncArgs) types.Val {
+		return NewIntVal(args.Left + args.Right)
 	})
 }
 
 func TestReflect_DefaultArgumentValuesOptional(t *testing.T) {
 	f := NewExampleOptionalFunc()
 	assert.Equal(t, []string{"Left", "Right"}, f.ArgNames())
-	assert.Equal(t, map[string]types.Val{"Left": NilVal, "Right": NilVal}, f.DefaultArgs())
+	assert.Equal(t, map[string]types.Val{"Left": NewIntVal(2), "Right": NewIntVal(0)}, f.DefaultArgs())
+}
+
+type AdvancedDefaultFuncArgs struct {
+	Slice pcommon.Slice `ottl:"default=pcommon.Slice()"`
+}
+
+func TestReflect_DefaultAdvancedValues(t *testing.T) {
+	f := NewReflectFunc("test", &AdvancedDefaultFuncArgs{},
+		func(t *AdvancedDefaultFuncArgs) types.Val {
+			return NewSliceVar(t.Slice)
+		})
+	args := f.DefaultArgs()
+	assert.Contains(t, args, "Slice")
+	sliceDefault := args["Slice"]
+	sliceDefaultValue, ok := sliceDefault.Value().(pcommon.Slice)
+	assert.True(t, ok, "default is not a slice", sliceDefault)
+	assert.Equal(t, []any{}, sliceDefaultValue.AsRaw())
+
+	mySlice := pcommon.NewSlice()
+	mySlice.AppendEmpty().SetInt(1)
+	mySlice.AppendEmpty().SetInt(2)
+	result := f.Call([]types.Val{NewSliceVar(mySlice)})
+	resultSlice, ok := result.Value().(pcommon.Slice)
+	assert.True(t, ok, "function call result is not a slice", result)
+	assert.Equal(t, []any{int64(1), int64(2)}, resultSlice.AsRaw())
 }

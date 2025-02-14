@@ -4,12 +4,13 @@
 package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 ) // This type does not support named args.
 type simpleFunc struct {
 	name    string
@@ -92,16 +93,15 @@ type reflectArgsFunc[T any] struct {
 	args *T
 	// The implementation of the function.
 	impl func(*T) types.Val
+	// Argument names (pulled reflectively).
+	argNames []string
+	// Default argument values (pulled reflectively).
+	defaultValues map[string]types.Val
 }
 
 // ArgNames implements types.Function.
 func (r *reflectArgsFunc[T]) ArgNames() []string {
-	argsVal := reflect.ValueOf(r.args).Elem()
-	result := []string{}
-	for i := 0; i < argsVal.NumField(); i++ {
-		result = append(result, argsVal.Type().Field(i).Name)
-	}
-	return result
+	return r.argNames
 }
 
 // Call implements types.Function.
@@ -111,15 +111,17 @@ func (r *reflectArgsFunc[T]) Call(args []types.Val) types.Val {
 	for i := 0; i < argsVal.NumField(); i++ {
 		field := argsVal.Field(i)
 		fieldType := field.Type()
-		isOptional := strings.HasPrefix(fieldType.Name(), "Optional")
-		if isOptional {
-			manager, ok := field.Interface().(optionalManager)
-			if !ok {
-				return NewErrorVal(errors.New("optional type is not manageable by the OTTL parser. This is an error in the OTTL"))
-			}
-			manager.set(args[i].Value())
+		if fieldType == reflect.TypeFor[types.Val]() {
+			field.Set(reflect.ValueOf(args[i]))
+		} else if fieldType == reflect.TypeFor[types.Var]() {
+			field.Set(reflect.ValueOf(args[i]))
 		} else {
-			field.Set(reflect.ValueOf(args[i].Value()))
+			// If argument isn't a "Val", we call the .Value.
+			v := args[i].Value()
+			// If the argument is empty, we don't try to set the arugment value.
+			if v != nil {
+				field.Set(reflect.ValueOf(v))
+			}
 		}
 	}
 	return r.impl(rArgs.(*T))
@@ -127,19 +129,7 @@ func (r *reflectArgsFunc[T]) Call(args []types.Val) types.Val {
 
 // DefaultArgs implements types.Function.
 func (r *reflectArgsFunc[T]) DefaultArgs() map[string]types.Val {
-	// TODO - precalculate this on creating the struct?
-	// TODO - Allow other defaults besides optional.
-	defaultArgs := map[string]types.Val{}
-	argsVal := reflect.ValueOf(r.args).Elem()
-	for i := 0; i < argsVal.NumField(); i++ {
-		field := argsVal.Field(i)
-		isOptional := strings.HasPrefix(field.Type().Name(), "Optional")
-		if isOptional {
-			defaultArgs[argsVal.Type().Field(i).Name] = NilVal
-
-		}
-	}
-	return defaultArgs
+	return r.defaultValues
 }
 
 // Name implements types.Function.
@@ -152,8 +142,7 @@ func (r *reflectArgsFunc[T]) Name() string {
 //   - args MUST be a pointer to a structure.
 //   - The name of fields in the structure become the name of allowed arguments to
 //     the function.
-//   - Any field using `ottl2.Optional` will not be required to be provided, and
-//     default to an empty optional value.
+//   - Fields can be annotated with tags `ottl:` to denote default values.
 func NewReflectFunc[T any](
 	name string,
 	args *T,
@@ -163,45 +152,66 @@ func NewReflectFunc[T any](
 		// TODO - non-panic error.
 		panic(fmt.Sprintf("factory for %s must return pointer to Arguments", name))
 	}
-	return &reflectArgsFunc[T]{name, args, impl}
-}
-
-// optionalManager provides a way for the parser to handle Optional[T] structs
-// without needing to know the concrete type of T, which is inaccessible through
-// the reflect package.
-// Would likely be resolved by https://github.com/golang/go/issues/54393.
-type optionalManager interface {
-	// set takes a non-reflection value and returns a reflect.Value of
-	// an Optional[T] struct with this value set.
-	set(val any) reflect.Value
-}
-
-type Optional[T any] struct {
-	val      T
-	hasValue bool
-}
-
-// This is called only by reflection.
-func (o Optional[T]) set(val any) reflect.Value {
-	return reflect.ValueOf(Optional[T]{
-		val:      val.(T),
-		hasValue: val == nil,
-	})
-}
-
-func (o Optional[T]) IsEmpty() bool {
-	return !o.hasValue
-}
-
-func (o Optional[T]) Get() T {
-	return o.val
-}
-
-// Allows creating an Optional with a value already populated for use in testing
-// OTTL functions.
-func NewTestingOptional[T any](val T) Optional[T] {
-	return Optional[T]{
-		val:      val,
-		hasValue: true,
+	// Here we construct default arguments for parsing.
+	argsVal := reflect.ValueOf(args).Elem()
+	argNames := []string{}
+	defaultArgs := map[string]types.Val{}
+	for i := 0; i < argsVal.NumField(); i++ {
+		argNames = append(argNames, argsVal.Type().Field(i).Name)
+		if defaultValue, ok := parseOttlArgTag(argsVal.Type().Field(i)); ok {
+			defaultArgs[argsVal.Type().Field(i).Name] = defaultValue
+		}
 	}
+	return &reflectArgsFunc[T]{name, args, impl, argNames, defaultArgs}
+}
+
+// Parses `ottl` tag on argument structure fields.
+func parseOttlArgTag(field reflect.StructField) (types.Val, bool) {
+	tag := field.Tag.Get("ottl")
+	// TODO - parse out field tags.
+	if tag != "" {
+		// parse key-value pairs
+		options := make(map[string]string)
+		parts := strings.Split(tag, ",")
+		for _, part := range parts {
+			kv := strings.Split(part, "=")
+			if len(kv) == 2 {
+				options[kv[0]] = kv[1]
+			}
+		}
+		if defaultStr, ok := options["default"]; ok {
+			// We need to translate this to the right value...
+			switch field.Type.Kind() {
+			case reflect.Struct:
+				switch defaultStr {
+				case "pcommon.Slice()":
+					return NewSliceVar(pcommon.NewSlice()), true
+				}
+				panic(fmt.Sprintf("ottl setup error: invalid default value for struct field %s: %v", field.Name, defaultStr))
+			case reflect.Interface:
+				if defaultStr == "nil" {
+					return NilVal, true
+				}
+				panic(fmt.Sprintf("ottl setup error: invalid default value for interface field %s: %v", field.Name, defaultStr))
+			case reflect.String:
+				return NewStringVal(defaultStr), true
+			case reflect.Int | reflect.Int64:
+				val, err := strconv.Atoi(defaultStr)
+				if err != nil {
+					panic(fmt.Sprintf("ottl setup error: invalid default value for int field %s: %v", field.Name, err))
+				}
+				return NewIntVal(int64(val)), true
+			case reflect.Bool:
+				val, err := strconv.ParseBool(defaultStr)
+				if err != nil {
+					panic(fmt.Sprintf("ottl setup error: invalid default value for bool field %s: %v", field.Name, err))
+				}
+				return NewBoolVal(val), true
+			default:
+				panic(fmt.Sprintf("ottl setup error: unsupported type for default value: %s", field.Type.Kind()))
+			}
+		}
+	}
+
+	return nil, false
 }
