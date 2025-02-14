@@ -212,11 +212,7 @@ type ExampleFuncArgs struct {
 }
 
 func NewExampleFunc() types.Function {
-	return NewReflectFunc("-", &ExampleFuncArgs{}, func(a Arguments) types.Val {
-		args, ok := a.(*ExampleFuncArgs)
-		if !ok {
-			return NewErrorVal(fmt.Errorf("function should take pointer to ExampleFuncArgs, found %v", a))
-		}
+	return NewReflectFunc("-", &ExampleFuncArgs{}, func(args *ExampleFuncArgs) types.Val {
 		return NewIntVal(args.Left - args.Right)
 	})
 }
@@ -232,11 +228,7 @@ type ExampleOptionalFuncArgs struct {
 }
 
 func NewExampleOptionalFunc() types.Function {
-	return NewReflectFunc("-", &ExampleOptionalFuncArgs{}, func(a Arguments) types.Val {
-		args, ok := a.(*ExampleOptionalFuncArgs)
-		if !ok {
-			return NewErrorVal(fmt.Errorf("function should take pointer to ExampleFuncArgs, found %v", a))
-		}
+	return NewReflectFunc("-", &ExampleOptionalFuncArgs{}, func(args *ExampleOptionalFuncArgs) types.Val {
 		result := int64(0)
 		if !args.Left.IsEmpty() {
 			result += args.Left.Get()
