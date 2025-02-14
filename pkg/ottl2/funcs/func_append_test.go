@@ -77,28 +77,19 @@ func Test_Append(t *testing.T) {
 			} else {
 				args[2] = f.DefaultArgs()["Values"]
 			}
-			t.Log("before-call target:", tc.Target.Value().(pcommon.Slice).AsRaw())
-			t.Log("before-call args:", args)
 			result := f.Call(args)
 			if result.Type() == stdlib.ErrorType {
 				assert.Fail(t, "append failed: %v", result.Value())
 			}
 			expectedSlice := pcommon.NewSlice()
 			tc.Want(expectedSlice)
-			t.Log("expected:", expectedSlice.AsRaw())
 			assert.EqualValues(t, expectedSlice, tc.Target.Value())
-
-			t.Log("after-call result:", result)
-			t.Log("after-call args:", args)
-			t.Log("after-call target:", tc.Target.Value().(pcommon.Slice).AsRaw())
-			// Hard force.
-			tc.Target.SetValue(stdlib.NewSliceVar(expectedSlice))
-			t.Log("after-force target:", tc.Target.Value().(pcommon.Slice).AsRaw())
 		})
 	}
 }
 
 func valueFromAny(v any) pcommon.Value {
+	// TODO - Handle all the types we may be appending
 	switch valueType := v.(type) {
 	case int64:
 		return pcommon.NewValueInt(valueType)
