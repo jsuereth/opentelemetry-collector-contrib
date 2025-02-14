@@ -4,6 +4,7 @@
 package stdlib // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -116,7 +117,11 @@ func (r *reflectArgsFunc) Call(args []types.Val) types.Val {
 		fieldType := field.Type()
 		isOptional := strings.HasPrefix(fieldType.Name(), "Optional")
 		if isOptional {
-			// TODO - use optional type handling.
+			manager, ok := field.Interface().(optionalManager)
+			if !ok {
+				return NewErrorVal(errors.New("optional type is not manageable by the OTTL parser. This is an error in the OTTL"))
+			}
+			manager.set(args[i].Value())
 		} else {
 			field.Set(reflect.ValueOf(args[i].Value()))
 		}
@@ -126,8 +131,19 @@ func (r *reflectArgsFunc) Call(args []types.Val) types.Val {
 
 // DefaultArgs implements types.Function.
 func (r *reflectArgsFunc) DefaultArgs() map[string]types.Val {
-	// TODO - implement default arguments.
-	return map[string]types.Val{}
+	// TODO - precalculate this on creating the struct?
+	// TODO - Allow other defaults besides optional.
+	defaultArgs := map[string]types.Val{}
+	argsVal := reflect.ValueOf(r.args).Elem()
+	for i := 0; i < argsVal.NumField(); i++ {
+		field := argsVal.Field(i)
+		isOptional := strings.HasPrefix(field.Type().Name(), "Optional")
+		if isOptional {
+			defaultArgs[argsVal.Type().Field(i).Name] = NilVal
+
+		}
+	}
+	return defaultArgs
 }
 
 // Name implements types.Function.
@@ -135,6 +151,13 @@ func (r *reflectArgsFunc) Name() string {
 	return r.name
 }
 
+// Constructs a new function that leverages a structure for all arguments.
+//
+//   - args MUST be a pointer to a structure.
+//   - The name of fields in the structure become the name of allowed arguments to
+//     the function.
+//   - Any field using `ottl2.Optional` will not be required to be provided, and
+//     default to an empty optional value.
 func NewReflectFunc(
 	name string,
 	args Arguments,
@@ -144,6 +167,45 @@ func NewReflectFunc(
 		// TODO - non-panic error.
 		panic(fmt.Sprintf("factory for %s must return pointer to Arguments", name))
 	}
-
 	return &reflectArgsFunc{name, args, impl}
+}
+
+// optionalManager provides a way for the parser to handle Optional[T] structs
+// without needing to know the concrete type of T, which is inaccessible through
+// the reflect package.
+// Would likely be resolved by https://github.com/golang/go/issues/54393.
+type optionalManager interface {
+	// set takes a non-reflection value and returns a reflect.Value of
+	// an Optional[T] struct with this value set.
+	set(val any) reflect.Value
+}
+
+type Optional[T any] struct {
+	val      T
+	hasValue bool
+}
+
+// This is called only by reflection.
+func (o Optional[T]) set(val any) reflect.Value {
+	return reflect.ValueOf(Optional[T]{
+		val:      val.(T),
+		hasValue: val == nil,
+	})
+}
+
+func (o Optional[T]) IsEmpty() bool {
+	return !o.hasValue
+}
+
+func (o Optional[T]) Get() T {
+	return o.val
+}
+
+// Allows creating an Optional with a value already populated for use in testing
+// OTTL functions.
+func NewTestingOptional[T any](val T) Optional[T] {
+	return Optional[T]{
+		val:      val,
+		hasValue: true,
+	}
 }

@@ -225,3 +225,31 @@ func TestReflect_ArgumentNames(t *testing.T) {
 	f := NewExampleFunc()
 	assert.ElementsMatch(t, []string{"Left", "Right"}, f.ArgNames())
 }
+
+type ExampleOptionalFuncArgs struct {
+	Left  Optional[int64]
+	Right Optional[int64]
+}
+
+func NewExampleOptionalFunc() types.Function {
+	return NewReflectFunc("-", &ExampleOptionalFuncArgs{}, func(a Arguments) types.Val {
+		args, ok := a.(*ExampleOptionalFuncArgs)
+		if !ok {
+			return NewErrorVal(fmt.Errorf("function should take pointer to ExampleFuncArgs, found %v", a))
+		}
+		result := int64(0)
+		if !args.Left.IsEmpty() {
+			result += args.Left.Get()
+		}
+		if !args.Right.IsEmpty() {
+			result += args.Right.Get()
+		}
+		return NewIntVal(result)
+	})
+}
+
+func TestReflect_DefaultArgumentValuesOptional(t *testing.T) {
+	f := NewExampleOptionalFunc()
+	assert.Equal(t, []string{"Left", "Right"}, f.ArgNames())
+	assert.Equal(t, map[string]types.Val{"Left": NilVal, "Right": NilVal}, f.DefaultArgs())
+}
