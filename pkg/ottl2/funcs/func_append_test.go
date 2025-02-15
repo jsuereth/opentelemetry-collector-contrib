@@ -6,8 +6,8 @@ package funcs // import "github.com/open-telemetry/opentelemetry-collector-contr
 import (
 	"testing"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/stdlib"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
@@ -15,7 +15,7 @@ import (
 func Test_Append(t *testing.T) {
 	testCases := []struct {
 		Name   string
-		Target types.Var
+		Target runtime.Var
 		Value  any
 		Values []any
 		Want   func(pcommon.Slice)
@@ -63,7 +63,7 @@ func Test_Append(t *testing.T) {
 	f := NewAppendFunc()
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			args := make([]types.Val, 3)
+			args := make([]runtime.Val, 3)
 			args[0] = tc.Target
 			if tc.Value != nil {
 				args[1] = stdlib.NewPvalVar(valueFromAny(tc.Value))

@@ -3,11 +3,11 @@
 
 package funcs // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/funcs"
 
-import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
+import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime"
 
 // Standard functions for OTTL.
-func StandardFuncs() []types.Function {
-	return []types.Function{
+func StandardFuncs() []runtime.Function {
+	return []runtime.Function{
 		NewIsBoolFunc(),
 		NewIsIntFunc(),
 		NewIsDoubleFunc(),

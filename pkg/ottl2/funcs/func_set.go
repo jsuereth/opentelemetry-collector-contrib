@@ -6,24 +6,24 @@ package funcs // import "github.com/open-telemetry/opentelemetry-collector-contr
 import (
 	"fmt"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/stdlib"
 )
 
-func NewSetFunc() types.Function {
+func NewSetFunc() runtime.Function {
 	return stdlib.NewFunc(
 		"set",
 		[]string{"target", "value"},
-		map[string]types.Val{},
+		map[string]runtime.Val{},
 		setImpl,
 	)
 }
 
-func setImpl(args []types.Val) types.Val {
+func setImpl(args []runtime.Val) runtime.Val {
 	if len(args) != 2 {
 		return stdlib.NewErrorVal(fmt.Errorf("invalid # of arguments to set, found: %v", args))
 	}
-	target, ok := args[0].(types.Var)
+	target, ok := args[0].(runtime.Var)
 	if !ok {
 		return stdlib.NewErrorVal(fmt.Errorf("cannot set: %v", args[0]))
 	}

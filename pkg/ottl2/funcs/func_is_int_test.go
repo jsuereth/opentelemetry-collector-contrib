@@ -6,8 +6,8 @@ package funcs // import "github.com/open-telemetry/opentelemetry-collector-contr
 import (
 	"testing"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/stdlib"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
@@ -15,7 +15,7 @@ import (
 func Test_IsInt(t *testing.T) {
 	tests := []struct {
 		name     string
-		value    types.Val
+		value    runtime.Val
 		expected bool
 	}{
 		{
@@ -62,7 +62,7 @@ func Test_IsInt(t *testing.T) {
 	isInt := NewIsIntFunc()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := isInt.Call([]types.Val{
+			result := isInt.Call([]runtime.Val{
 				tt.value,
 			})
 			v, err := result.ConvertTo(stdlib.BoolType)

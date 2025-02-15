@@ -7,30 +7,30 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/traits"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/stdlib"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/traits"
 )
 
 // A value that can be interpreted given an OTTL context.
 // You can extend capabilities using other interfaces.
 type Interpretable interface {
 	// Eval an Activation to produce an output.
-	Eval(ctx context.Context, ec EvalContext) types.Val
+	Eval(ctx context.Context, ec EvalContext) runtime.Val
 	// Disallow implementations outside this package.
 	// unexportedFactoryFunc()
 }
 
 // Type contianing literal expression
 type literalExpr struct {
-	value types.Val
+	value runtime.Val
 }
 
-func (le *literalExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (le *literalExpr) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	return le.value
 }
 
-func ValExpr(v types.Val) Interpretable {
+func ValExpr(v runtime.Val) Interpretable {
 	return &literalExpr{v}
 }
 
@@ -65,7 +65,7 @@ type lookUp struct {
 	name string
 }
 
-func (l *lookUp) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (l *lookUp) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	if v, ok := ec.ResolveName(l.name); ok {
 		return v
 	}
@@ -83,9 +83,9 @@ type accessExpr struct {
 }
 
 // Eval implements Interpretable.
-func (a *accessExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (a *accessExpr) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	target := a.target.Eval(ctx, ec)
-	return target.(traits.StructureAccessible).GetField(a.field)
+	return target.(runtime.Structure).GetField(a.field)
 }
 
 func AccessExpr(target Interpretable, field string) Interpretable {
@@ -98,9 +98,9 @@ type indexExpr struct {
 }
 
 // Eval implements Interpretable.
-func (i *indexExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (i *indexExpr) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	target := i.target.Eval(ctx, ec)
-	return target.(traits.Indexable).GetIndex(i.idx)
+	return target.(runtime.Indexable).GetIndex(i.idx)
 }
 
 func IndexExpr(target Interpretable, idx int64) Interpretable {
@@ -113,9 +113,9 @@ type keyExpr struct {
 }
 
 // Eval implements Interpretable.
-func (k *keyExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (k *keyExpr) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	target := k.target.Eval(ctx, ec)
-	return target.(traits.KeyAccessable).GetKey(k.key)
+	return target.(runtime.KeyIndexable).GetKey(k.key)
 }
 
 func KeyExpr(target Interpretable, key string) Interpretable {
@@ -126,8 +126,8 @@ type listExpr struct {
 	items []Interpretable
 }
 
-func (l *listExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
-	list := make([]types.Val, len(l.items))
+func (l *listExpr) Eval(ctx context.Context, ec EvalContext) runtime.Val {
+	list := make([]runtime.Val, len(l.items))
 	for i, v := range l.items {
 		r := v.Eval(ctx, ec)
 		list[i] = r
@@ -144,8 +144,8 @@ type mapExpr struct {
 	items map[string]Interpretable
 }
 
-func (m *mapExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
-	result := map[string]types.Val{}
+func (m *mapExpr) Eval(ctx context.Context, ec EvalContext) runtime.Val {
+	result := map[string]runtime.Val{}
 	for k, v := range m.items {
 		r := v.Eval(ctx, ec)
 		result[k] = r
@@ -164,7 +164,7 @@ type addOp struct {
 }
 
 // Eval implements Interpretable.
-func (a *addOp) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (a *addOp) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	lhs := a.lhs.Eval(ctx, ec)
 	rhs := a.rhs.Eval(ctx, ec)
 	return lhs.(traits.Adder).Add(rhs)
@@ -179,7 +179,7 @@ type subOp struct {
 	rhs Interpretable
 }
 
-func (m *subOp) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (m *subOp) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	lhs := m.lhs.Eval(ctx, ec)
 	rhs := m.rhs.Eval(ctx, ec)
 	return lhs.(traits.Subtractor).Subtract(rhs)
@@ -194,7 +194,7 @@ type multOp struct {
 	rhs Interpretable
 }
 
-func (m *multOp) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (m *multOp) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	lhs := m.lhs.Eval(ctx, ec)
 	rhs := m.rhs.Eval(ctx, ec)
 	return lhs.(traits.Multiplier).Multiply(rhs)
@@ -209,7 +209,7 @@ type divOp struct {
 	rhs Interpretable
 }
 
-func (m *divOp) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (m *divOp) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	lhs := m.lhs.Eval(ctx, ec)
 	rhs := m.rhs.Eval(ctx, ec)
 	return lhs.(traits.Divider).Divide(rhs)
@@ -220,18 +220,18 @@ func DivExpr(lhs Interpretable, rhs Interpretable) Interpretable {
 }
 
 type funcArg struct {
-	constant *types.Val
+	constant *runtime.Val
 	expr     *Interpretable
 }
 
 type funcCall struct {
-	f    types.Function
+	f    runtime.Function
 	args []funcArg
 }
 
 // Eval implements Interpretable.
-func (f *funcCall) Eval(ctx context.Context, ec EvalContext) types.Val {
-	args := make([]types.Val, len(f.args))
+func (f *funcCall) Eval(ctx context.Context, ec EvalContext) runtime.Val {
+	args := make([]runtime.Val, len(f.args))
 	for idx, v := range f.args {
 		switch {
 		case v.constant != nil:
@@ -243,7 +243,7 @@ func (f *funcCall) Eval(ctx context.Context, ec EvalContext) types.Val {
 	return f.f.Call(args)
 }
 
-func FuncCallExpr(f types.Function, args []Interpretable, namedArgs map[string]Interpretable) Interpretable {
+func FuncCallExpr(f runtime.Function, args []Interpretable, namedArgs map[string]Interpretable) Interpretable {
 	// erase named/default values to ONLY be positional when interpreting.
 	names := f.ArgNames()
 	defaults := f.DefaultArgs()
@@ -275,7 +275,7 @@ type negExpr struct {
 	e Interpretable
 }
 
-func (n *negExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (n *negExpr) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	orig, err := n.e.Eval(ctx, ec).ConvertTo(stdlib.BoolType)
 	if err != nil {
 		return stdlib.NewErrorVal(err)
@@ -292,7 +292,7 @@ type andExpr struct {
 	rhs Interpretable
 }
 
-func (a *andExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (a *andExpr) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	lhs, err := a.lhs.Eval(ctx, ec).ConvertTo(stdlib.BoolType)
 	if err != nil {
 		return stdlib.NewErrorVal(err)
@@ -316,7 +316,7 @@ type orExpr struct {
 	rhs Interpretable
 }
 
-func (a *orExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (a *orExpr) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	lhs, err := a.lhs.Eval(ctx, ec).ConvertTo(stdlib.BoolType)
 	if err != nil {
 		return stdlib.NewErrorVal(err)
@@ -335,20 +335,20 @@ func OrExpr(lhs Interpretable, rhs Interpretable) Interpretable {
 	return &orExpr{lhs, rhs}
 }
 
-type binOpFunc func(types.Val, types.Val) types.Val
+type binOpFunc func(runtime.Val, runtime.Val) runtime.Val
 type binOpExpr struct {
 	lhs Interpretable
 	rhs Interpretable
 	f   binOpFunc
 }
 
-func (b *binOpExpr) Eval(ctx context.Context, ec EvalContext) types.Val {
+func (b *binOpExpr) Eval(ctx context.Context, ec EvalContext) runtime.Val {
 	// TODO - should we check for errors?
 	lhs := b.lhs.Eval(ctx, ec)
 	rhs := b.rhs.Eval(ctx, ec)
 	return b.f(lhs, rhs)
 }
 
-func NewBinaryOperation(lhs Interpretable, rhs Interpretable, op func(types.Val, types.Val) types.Val) Interpretable {
+func NewBinaryOperation(lhs Interpretable, rhs Interpretable, op func(runtime.Val, runtime.Val) runtime.Val) Interpretable {
 	return &binOpExpr{lhs, rhs, op}
 }

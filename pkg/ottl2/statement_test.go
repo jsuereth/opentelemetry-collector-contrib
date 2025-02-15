@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/funcs"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/stdlib"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,21 +21,21 @@ type testContext struct {
 }
 
 // Define the structure of the context for the parser to understand.
-var testContextType = types.NewStructureType(
+var testContextType = runtime.NewStructureType(
 	"MyContext",
-	map[string]types.Type{
+	map[string]runtime.Type{
 		"name": stdlib.StringType,
 		"age":  stdlib.IntType,
 	},
 )
 
 // Note: MyContext MUST implement types.Val and traits.StructureAccessible
-func (m *testContext) ConvertTo(t types.Type) (any, error) {
+func (m *testContext) ConvertTo(t runtime.Type) (any, error) {
 	return nil, fmt.Errorf("unable to convert context")
 }
 
 // We define how to access values here.
-func (m *testContext) GetField(field string) types.Val {
+func (m *testContext) GetField(field string) runtime.Val {
 	switch field {
 	case "name":
 		return stdlib.NewStringVar(
@@ -58,15 +58,15 @@ func (m *testContext) GetField(field string) types.Val {
 	}
 	return stdlib.NewErrorVal(fmt.Errorf("unknown field: %s", field))
 }
-func (m *testContext) Type() types.Type {
+func (m *testContext) Type() runtime.Type {
 	return testContextType
 }
 func (m *testContext) Value() any {
 	return m
 }
 
-func IsEmptyFunc() types.Function {
-	return stdlib.NewSimpleFunc("IsEmpty", 1, func(args []types.Val) types.Val {
+func IsEmptyFunc() runtime.Function {
+	return stdlib.NewSimpleFunc("IsEmpty", 1, func(args []runtime.Val) runtime.Val {
 		r, err := args[0].ConvertTo(stdlib.StringType)
 		if err != nil {
 			return stdlib.NewErrorVal(err)
@@ -75,8 +75,8 @@ func IsEmptyFunc() types.Function {
 	})
 }
 
-func RouteFunc() types.Function {
-	return stdlib.NewSimpleFunc("route", 0, func(args []types.Val) types.Val {
+func RouteFunc() runtime.Function {
+	return stdlib.NewSimpleFunc("route", 0, func(args []runtime.Val) runtime.Val {
 		return stdlib.NewBoolVal(true)
 	})
 }
@@ -84,8 +84,8 @@ func RouteFunc() types.Function {
 func Test_simple_e2e_readonly(t *testing.T) {
 	env := NewTransformContext[testContext](
 		testContextType,
-		func(v *testContext) types.Val { return v },
-		WithFunctions[testContext]([]types.Function{
+		func(v *testContext) runtime.Val { return v },
+		WithFunctions[testContext]([]runtime.Function{
 			IsEmptyFunc(),
 			RouteFunc(),
 		}),
@@ -102,8 +102,8 @@ func Test_simple_e2e_readonly(t *testing.T) {
 func Test_simple_e2e_mutable(t *testing.T) {
 	env := NewTransformContext[testContext](
 		testContextType,
-		func(v *testContext) types.Val { return v },
-		WithFunctions[testContext]([]types.Function{
+		func(v *testContext) runtime.Val { return v },
+		WithFunctions[testContext]([]runtime.Function{
 			IsEmptyFunc(),
 			RouteFunc(),
 		}),
@@ -155,8 +155,8 @@ func Benchmark_statement(t *testing.B) {
 	}
 	env := NewTransformContext[testContext](
 		testContextType,
-		func(v *testContext) types.Val { return v },
-		WithFunctions[testContext]([]types.Function{
+		func(v *testContext) runtime.Val { return v },
+		WithFunctions[testContext]([]runtime.Function{
 			IsEmptyFunc(),
 			RouteFunc(),
 		}),

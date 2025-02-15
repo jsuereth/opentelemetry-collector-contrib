@@ -6,30 +6,29 @@ package ottl2 // import "github.com/open-telemetry/opentelemetry-collector-contr
 import (
 	"fmt"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types" // Context to run transformations
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/traits"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime" // Context to run transformations
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/stdlib"
 )
 
 type TransformContext[E any] struct {
 	pCtx      ParserEnvironment
-	constants map[string]types.Val
-	converter func(*E) types.Val
+	constants map[string]runtime.Val
+	converter func(*E) runtime.Val
 }
 
 // TODO - see if we cna infer a types.StructType from a go interface...
 func NewTransformContext[E any](
-	ctxType types.StructType,
-	converter func(*E) types.Val, // Converts the raw context type into a `types.Val` with `traits.StructureAccessible` matching the `ctxType`.
+	ctxType runtime.StructType,
+	converter func(*E) runtime.Val, // Converts the raw context type into a `types.Val` with `traits.StructureAccessible` matching the `ctxType`.
 	opts ...Option[E]) TransformContext[E] {
-	contextFields := map[string]types.Type{}
+	contextFields := map[string]runtime.Type{}
 	for _, field := range ctxType.FieldNames() {
 		t, _ := ctxType.GetField(field)
 		contextFields[field] = t
 	}
 	result := TransformContext[E]{
-		pCtx:      NewParserEnvironemnt(contextFields, map[string]types.Function{}, []types.EnumProvider{}),
-		constants: map[string]types.Val{},
+		pCtx:      NewParserEnvironemnt(contextFields, map[string]runtime.Function{}, []runtime.EnumProvider{}),
+		constants: map[string]runtime.Val{},
 		converter: converter,
 	}
 	for _, opt := range opts {
@@ -43,7 +42,7 @@ type Option[E any] struct {
 }
 
 // Registers a function (editor or convertor) usable in this transformation.
-func WithFunction[E any](f types.Function) Option[E] {
+func WithFunction[E any](f runtime.Function) Option[E] {
 	return Option[E]{
 		func(c *TransformContext[E]) {
 			c.pCtx.functions[f.Name()] = f
@@ -52,7 +51,7 @@ func WithFunction[E any](f types.Function) Option[E] {
 }
 
 // Registers a set of functions function (editor or convertor).
-func WithFunctions[E any](fs []types.Function) Option[E] {
+func WithFunctions[E any](fs []runtime.Function) Option[E] {
 	return Option[E]{
 		func(c *TransformContext[E]) {
 			for _, f := range fs {
@@ -63,7 +62,7 @@ func WithFunctions[E any](fs []types.Function) Option[E] {
 }
 
 // Registers a constant usable at "root" for this transformation.
-func WithConstant[E any](name string, value types.Val) Option[E] {
+func WithConstant[E any](name string, value runtime.Val) Option[E] {
 	return Option[E]{
 		func(c *TransformContext[E]) {
 			c.pCtx.variables[name] = value.Type()
@@ -73,7 +72,7 @@ func WithConstant[E any](name string, value types.Val) Option[E] {
 }
 
 // Registers a complete enumerated type.
-func WithEnum[E any](enumDef types.EnumProvider) Option[E] {
+func WithEnum[E any](enumDef runtime.EnumProvider) Option[E] {
 	return Option[E]{
 		func(c *TransformContext[E]) {
 			c.pCtx.enums = append(c.pCtx.enums, enumDef)
@@ -82,22 +81,22 @@ func WithEnum[E any](enumDef types.EnumProvider) Option[E] {
 }
 
 // TransformContext is a ParserContext.HasName
-func (e TransformContext[E]) ResolveName(name string) (types.Type, bool) {
+func (e TransformContext[E]) ResolveName(name string) (runtime.Type, bool) {
 	return e.pCtx.ResolveName(name)
 }
 
 // TransformContext is a ParserContext.ResolveFunctoin
-func (e TransformContext[E]) ResolveFunction(name string) (types.Function, bool) {
+func (e TransformContext[E]) ResolveFunction(name string) (runtime.Function, bool) {
 	return e.pCtx.ResolveFunction(name)
 }
 
 // TransformContext is a ParserContext.ResolveEnum
-func (e TransformContext[E]) ResolveEnum(name string) (types.Val, bool) {
+func (e TransformContext[E]) ResolveEnum(name string) (runtime.Val, bool) {
 	return e.pCtx.ResolveEnum(name)
 }
 
 type valDrivenEvalContext struct {
-	source types.Val
+	source runtime.Val
 }
 
 // Parent implements EvalContext.
@@ -110,8 +109,8 @@ func (v *valDrivenEvalContext) String() string {
 }
 
 // ResolveName implements EvalContext.
-func (v *valDrivenEvalContext) ResolveName(name string) (types.Val, bool) {
-	r := v.source.(traits.StructureAccessible).GetField(name)
+func (v *valDrivenEvalContext) ResolveName(name string) (runtime.Val, bool) {
+	r := v.source.(runtime.Structure).GetField(name)
 	return r, r.Type() != stdlib.ErrorType
 }
 

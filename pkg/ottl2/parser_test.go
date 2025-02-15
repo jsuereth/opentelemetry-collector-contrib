@@ -7,14 +7,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/stdlib"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 func testParser() Parser {
-	return NewParser(NewParserEnvironemnt(map[string]types.Type{}, map[string]types.Function{}, []types.EnumProvider{}))
+	return NewParser(NewParserEnvironemnt(map[string]runtime.Type{}, map[string]runtime.Function{}, []runtime.EnumProvider{}))
 }
 
 func TestParser_literals(t *testing.T) {
@@ -111,9 +111,9 @@ func TestParser_mathExpressions(t *testing.T) {
 	}
 }
 
-var testStructType = types.NewStructureType(
+var testStructType = runtime.NewStructureType(
 	"testStruct",
-	map[string]types.Type{
+	map[string]runtime.Type{
 		"value": stdlib.StringType,
 	},
 )
@@ -122,7 +122,7 @@ type testStruct struct {
 	value string
 }
 
-func (t *testStruct) Type() types.Type {
+func (t *testStruct) Type() runtime.Type {
 	return testStructType
 }
 
@@ -130,15 +130,15 @@ func (t *testStruct) Value() any {
 	return *t
 }
 
-func (t *testStruct) ConvertTo(tpe types.Type) (any, error) {
+func (t *testStruct) ConvertTo(tpe runtime.Type) (any, error) {
 	panic("unimplemented")
 }
 
-func (t *testStruct) GetField(field string) types.Val {
+func (t *testStruct) GetField(field string) runtime.Val {
 	return stdlib.NewStringVal(t.value)
 }
 
-func newTestStruct(value string) types.Val {
+func newTestStruct(value string) runtime.Val {
 	return &testStruct{value}
 }
 
@@ -168,11 +168,11 @@ func TestParser_environment(t *testing.T) {
 			expected: "result",
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					map[string]types.Type{"some": types.NewStructureType("custom", map[string]types.Type{
+					map[string]runtime.Type{"some": runtime.NewStructureType("custom", map[string]runtime.Type{
 						"value": stdlib.StringType,
 					})},
-					map[string]types.Function{},
-					[]types.EnumProvider{},
+					map[string]runtime.Function{},
+					[]runtime.EnumProvider{},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {
@@ -185,13 +185,13 @@ func TestParser_environment(t *testing.T) {
 			expected: "two",
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					map[string]types.Type{"list": stdlib.ListType},
-					map[string]types.Function{},
-					[]types.EnumProvider{},
+					map[string]runtime.Type{"list": stdlib.ListType},
+					map[string]runtime.Function{},
+					[]runtime.EnumProvider{},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {
-				te.WithVariable("list", stdlib.NewListVal([]types.Val{
+				te.WithVariable("list", stdlib.NewListVal([]runtime.Val{
 					stdlib.NewStringVal("one"), stdlib.NewStringVal("two"),
 				}))
 			}),
@@ -202,13 +202,13 @@ func TestParser_environment(t *testing.T) {
 			expected: "one",
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					map[string]types.Type{"dict": stdlib.MapType},
-					map[string]types.Function{},
-					[]types.EnumProvider{},
+					map[string]runtime.Type{"dict": stdlib.MapType},
+					map[string]runtime.Function{},
+					[]runtime.EnumProvider{},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {
-				te.WithVariable("dict", stdlib.NewMapVal(map[string]types.Val{
+				te.WithVariable("dict", stdlib.NewMapVal(map[string]runtime.Val{
 					"hi":  stdlib.NewStringVal("one"),
 					"bye": stdlib.NewStringVal("two"),
 				}))
@@ -220,13 +220,13 @@ func TestParser_environment(t *testing.T) {
 			expected: "test",
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					map[string]types.Type{"test": stdlib.StringType},
-					map[string]types.Function{
-						"doSomething": stdlib.NewSimpleFunc("doSomething", 1, func(v []types.Val) types.Val {
+					map[string]runtime.Type{"test": stdlib.StringType},
+					map[string]runtime.Function{
+						"doSomething": stdlib.NewSimpleFunc("doSomething", 1, func(v []runtime.Val) runtime.Val {
 							return v[0]
 						}),
 					},
-					[]types.EnumProvider{},
+					[]runtime.EnumProvider{},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {
@@ -239,9 +239,9 @@ func TestParser_environment(t *testing.T) {
 			expected: int64(ptrace.StatusCodeOk),
 			penv: newTestParserEnv(func() ParserEnvironment {
 				return NewParserEnvironemnt(
-					map[string]types.Type{},
-					map[string]types.Function{},
-					[]types.EnumProvider{stdlib.StatusCodeEnum},
+					map[string]runtime.Type{},
+					map[string]runtime.Function{},
+					[]runtime.EnumProvider{stdlib.StatusCodeEnum},
 				)
 			}),
 			env: newTestEnv(func(te *TransformEnvironment) {}),
@@ -255,9 +255,9 @@ func TestParser_environment(t *testing.T) {
 			p = NewParser(*tt.penv)
 		} else {
 			p = NewParser(NewParserEnvironemnt(
-				map[string]types.Type{},
-				map[string]types.Function{},
-				[]types.EnumProvider{},
+				map[string]runtime.Type{},
+				map[string]runtime.Function{},
+				[]runtime.EnumProvider{},
 			))
 		}
 		if tt.env != nil {
@@ -337,9 +337,9 @@ func TestParser_conditions(t *testing.T) {
 			p = NewParser(*tt.penv)
 		} else {
 			p = NewParser(NewParserEnvironemnt(
-				map[string]types.Type{},
-				map[string]types.Function{},
-				[]types.EnumProvider{},
+				map[string]runtime.Type{},
+				map[string]runtime.Function{},
+				[]runtime.EnumProvider{},
 			))
 		}
 		if tt.env != nil {

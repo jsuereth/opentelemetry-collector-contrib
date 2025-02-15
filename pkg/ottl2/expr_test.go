@@ -7,8 +7,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/stdlib"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -115,7 +115,7 @@ func TestExpr_math(t *testing.T) {
 	}
 }
 
-func addAll(args []types.Val) types.Val {
+func addAll(args []runtime.Val) runtime.Val {
 	result := int64(0)
 	for _, a := range args {
 		v, err := a.ConvertTo(stdlib.IntType)
@@ -130,21 +130,21 @@ func addAll(args []types.Val) types.Val {
 func TestExpr_FunctionCal(t *testing.T) {
 	tests := []struct {
 		name     string
-		f        types.Function
-		args     []types.Val
-		named    map[string]types.Val
-		expected types.Val
+		f        runtime.Function
+		args     []runtime.Val
+		named    map[string]runtime.Val
+		expected runtime.Val
 	}{
 		{
 			name: "positional only",
 			f: stdlib.NewFunc(
 				"test",
 				[]string{"", ""},
-				map[string]types.Val{},
+				map[string]runtime.Val{},
 				addAll,
 			),
-			args:     []types.Val{stdlib.NewIntVal(1), stdlib.NewIntVal(1)},
-			named:    map[string]types.Val{},
+			args:     []runtime.Val{stdlib.NewIntVal(1), stdlib.NewIntVal(1)},
+			named:    map[string]runtime.Val{},
 			expected: stdlib.NewIntVal(2),
 		},
 		{
@@ -152,11 +152,11 @@ func TestExpr_FunctionCal(t *testing.T) {
 			f: stdlib.NewFunc(
 				"test",
 				[]string{"lhs", "rhs"},
-				map[string]types.Val{},
+				map[string]runtime.Val{},
 				addAll,
 			),
-			args: []types.Val{},
-			named: map[string]types.Val{
+			args: []runtime.Val{},
+			named: map[string]runtime.Val{
 				"lhs": stdlib.NewIntVal(1),
 				"rhs": stdlib.NewIntVal(1),
 			},
@@ -167,14 +167,14 @@ func TestExpr_FunctionCal(t *testing.T) {
 			f: stdlib.NewFunc(
 				"test",
 				[]string{"lhs", "rhs"},
-				map[string]types.Val{
+				map[string]runtime.Val{
 					"lhs": stdlib.NewIntVal(1),
 					"rhs": stdlib.NewIntVal(1),
 				},
 				addAll,
 			),
-			args:     []types.Val{},
-			named:    map[string]types.Val{},
+			args:     []runtime.Val{},
+			named:    map[string]runtime.Val{},
 			expected: stdlib.NewIntVal(2),
 		},
 		{
@@ -182,14 +182,14 @@ func TestExpr_FunctionCal(t *testing.T) {
 			f: stdlib.NewFunc(
 				"test",
 				[]string{"lhs", "rhs"},
-				map[string]types.Val{
+				map[string]runtime.Val{
 					"lhs": stdlib.NewIntVal(1),
 					"rhs": stdlib.NewIntVal(1),
 				},
 				addAll,
 			),
-			args: []types.Val{},
-			named: map[string]types.Val{
+			args: []runtime.Val{},
+			named: map[string]runtime.Val{
 				"rhs": stdlib.NewIntVal(3),
 			},
 			expected: stdlib.NewIntVal(4),
@@ -199,16 +199,16 @@ func TestExpr_FunctionCal(t *testing.T) {
 			f: stdlib.NewFunc(
 				"test",
 				[]string{"lhs", "rhs"},
-				map[string]types.Val{
+				map[string]runtime.Val{
 					"lhs": stdlib.NewIntVal(1),
 					"rhs": stdlib.NewIntVal(1),
 				},
 				addAll,
 			),
-			args: []types.Val{
+			args: []runtime.Val{
 				stdlib.NewIntVal(5),
 			},
-			named: map[string]types.Val{
+			named: map[string]runtime.Val{
 				"rhs": stdlib.NewIntVal(3),
 			},
 			expected: stdlib.NewIntVal(8),
@@ -218,16 +218,16 @@ func TestExpr_FunctionCal(t *testing.T) {
 			f: stdlib.NewFunc(
 				"test",
 				[]string{"", "lhs", "rhs"},
-				map[string]types.Val{
+				map[string]runtime.Val{
 					"lhs": stdlib.NewIntVal(1),
 					"rhs": stdlib.NewIntVal(4),
 				},
 				addAll,
 			),
-			args: []types.Val{
+			args: []runtime.Val{
 				stdlib.NewIntVal(5),
 			},
-			named: map[string]types.Val{
+			named: map[string]runtime.Val{
 				"rhs": stdlib.NewIntVal(3),
 			},
 			expected: stdlib.NewIntVal(9),

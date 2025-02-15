@@ -6,8 +6,8 @@ package funcs // import "github.com/open-telemetry/opentelemetry-collector-contr
 import (
 	"testing"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/stdlib"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
@@ -17,9 +17,9 @@ func Test_set(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		target   types.Var
-		value    types.Val
-		expected types.Val
+		target   runtime.Var
+		value    runtime.Val
+		expected runtime.Val
 	}{
 		{
 			name:     "set name",
@@ -42,7 +42,7 @@ func Test_set(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := set.Call([]types.Val{tt.target, tt.value})
+			result := set.Call([]runtime.Val{tt.target, tt.value})
 			// Null return value.
 			assert.Equal(t, stdlib.NilVal, result)
 			// Target should now match result.

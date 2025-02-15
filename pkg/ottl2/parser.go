@@ -9,9 +9,9 @@ import (
 	"reflect"
 
 	"github.com/alecthomas/participle/v2"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/traits"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/stdlib"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/traits"
 ) // Parser is responsible for converting an OTTL expression string into an Expr.
 type Parser struct {
 	env ParserContext
@@ -151,7 +151,7 @@ func (p *Parser) parsePath(e path) (Interpretable, error) {
 	// So we MAY have context, or we MAY just have a field.
 	// We likely want to attach return types to Interpretable at some point.
 	var result Interpretable = nil
-	var currentType types.Type = stdlib.NilType
+	var currentType runtime.Type = stdlib.NilType
 	if e.Context != "" {
 		t, ok := p.env.ResolveName(e.Context)
 		if !ok {
@@ -170,10 +170,10 @@ func (p *Parser) parsePath(e path) (Interpretable, error) {
 				currentType = t
 				result = LookupExpr(field.Name)
 			} else {
-				if !reflect.TypeOf(currentType).Implements(reflect.TypeFor[types.StructType]()) {
+				if !reflect.TypeOf(currentType).Implements(reflect.TypeFor[runtime.StructType]()) {
 					return NilExpr(), fmt.Errorf("type %s has no fields, cannot find: %s", currentType.Name(), field.Name)
 				}
-				t, ok := currentType.(types.StructType).GetField(field.Name)
+				t, ok := currentType.(runtime.StructType).GetField(field.Name)
 				if !ok {
 					return NilExpr(), fmt.Errorf("type %s has no field named: %s", currentType.Name(), field.Name)
 				}
@@ -374,32 +374,32 @@ func (p *Parser) parseComparison(ce comparison) (Interpretable, error) {
 	// We should benchmark and update these to be more "inlinable", if needed.
 	switch ce.Op {
 	case eq:
-		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+		return NewBinaryOperation(lhs, rhs, func(l runtime.Val, r runtime.Val) runtime.Val {
 			result := l.(traits.Comparable).Equals(r)
 			return stdlib.NewBoolVal(result)
 		}), nil
 	case ne:
-		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+		return NewBinaryOperation(lhs, rhs, func(l runtime.Val, r runtime.Val) runtime.Val {
 			result := !l.(traits.Comparable).Equals(r)
 			return stdlib.NewBoolVal(result)
 		}), nil
 	case lt:
-		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+		return NewBinaryOperation(lhs, rhs, func(l runtime.Val, r runtime.Val) runtime.Val {
 			result := l.(traits.Comparable).LessThan(r)
 			return stdlib.NewBoolVal(result)
 		}), nil
 	case lte:
-		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+		return NewBinaryOperation(lhs, rhs, func(l runtime.Val, r runtime.Val) runtime.Val {
 			result := l.(traits.Comparable).LessThan(r) || l.(traits.Comparable).Equals(r)
 			return stdlib.NewBoolVal(result)
 		}), nil
 	case gte:
-		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+		return NewBinaryOperation(lhs, rhs, func(l runtime.Val, r runtime.Val) runtime.Val {
 			result := !l.(traits.Comparable).LessThan(r)
 			return stdlib.NewBoolVal(result)
 		}), nil
 	case gt:
-		return NewBinaryOperation(lhs, rhs, func(l types.Val, r types.Val) types.Val {
+		return NewBinaryOperation(lhs, rhs, func(l runtime.Val, r runtime.Val) runtime.Val {
 			result := !(l.(traits.Comparable).LessThan(r) || l.(traits.Comparable).Equals(r))
 			return stdlib.NewBoolVal(result)
 		}), nil

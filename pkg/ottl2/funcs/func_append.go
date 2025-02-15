@@ -4,23 +4,23 @@
 package funcs // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/funcs"
 
 import (
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/types/stdlib"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/runtime/stdlib"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 // TODO - Figure out if we work in the `Val` domain, or the raw domain, or both.
 type AppendArguments struct {
-	Target types.Var
+	Target runtime.Var
 	Value  any           `ottl:"default=nil"`
 	Values pcommon.Slice `ottl:"default=pcommon.Slice()"`
 }
 
-func NewAppendFunc() types.Function {
+func NewAppendFunc() runtime.Function {
 	return stdlib.NewReflectFunc(
 		"append",
 		&AppendArguments{},
-		func(args *AppendArguments) types.Val {
+		func(args *AppendArguments) runtime.Val {
 			t := args.Target
 			var res []any
 			res = appendAny(res, t.Value())
