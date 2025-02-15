@@ -8,7 +8,13 @@ import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl2/type
 // Standard functions for OTTL.
 func StandardFuncs() []types.Function {
 	return []types.Function{
+		NewIsBoolFunc(),
 		NewIsIntFunc(),
+		NewIsDoubleFunc(),
+		NewIsStringFunc(),
+		NewIsListFunc(),
+		NewIsMapFunc(),
 		NewSetFunc(),
+		NewAppendFunc(),
 	}
 }

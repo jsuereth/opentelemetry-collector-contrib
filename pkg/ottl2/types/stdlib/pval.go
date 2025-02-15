@@ -161,6 +161,12 @@ func convertPval(p pcommon.Value, t types.Type) (any, error) {
 		} else {
 			return nil, fmt.Errorf("%v is not a slice", p)
 		}
+	case PmapType:
+		if p.Type() == pcommon.ValueTypeMap {
+			return p.Map(), nil
+		} else {
+			return nil, fmt.Errorf("%v is not a map", p)
+		}
 	}
 	// TODO - other pvalue types.
 	return nil, fmt.Errorf("unknown type for pcommon.Value: %v", t.Name())
