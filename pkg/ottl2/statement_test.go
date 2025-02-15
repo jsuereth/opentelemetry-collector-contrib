@@ -84,7 +84,7 @@ func RouteFunc() runtime.Function {
 func Test_simple_e2e_readonly(t *testing.T) {
 	env := NewTransformContext[testContext](
 		testContextType,
-		func(v *testContext) runtime.Val { return v },
+		func(v *testContext) runtime.Structure { return v },
 		WithFunctions[testContext]([]runtime.Function{
 			IsEmptyFunc(),
 			RouteFunc(),
@@ -102,7 +102,7 @@ func Test_simple_e2e_readonly(t *testing.T) {
 func Test_simple_e2e_mutable(t *testing.T) {
 	env := NewTransformContext[testContext](
 		testContextType,
-		func(v *testContext) runtime.Val { return v },
+		func(v *testContext) runtime.Structure { return v },
 		WithFunctions[testContext]([]runtime.Function{
 			IsEmptyFunc(),
 			RouteFunc(),
@@ -155,7 +155,7 @@ func Benchmark_statement(t *testing.B) {
 	}
 	env := NewTransformContext[testContext](
 		testContextType,
-		func(v *testContext) runtime.Val { return v },
+		func(v *testContext) runtime.Structure { return v },
 		WithFunctions[testContext]([]runtime.Function{
 			IsEmptyFunc(),
 			RouteFunc(),

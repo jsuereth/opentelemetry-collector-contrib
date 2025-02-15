@@ -13,13 +13,13 @@ import (
 type TransformContext[E any] struct {
 	pCtx      ParserEnvironment
 	constants map[string]runtime.Val
-	converter func(*E) runtime.Val
+	converter func(*E) runtime.Structure
 }
 
 // TODO - see if we cna infer a types.StructType from a go interface...
 func NewTransformContext[E any](
 	ctxType runtime.StructType,
-	converter func(*E) runtime.Val, // Converts the raw context type into a `types.Val` with `traits.StructureAccessible` matching the `ctxType`.
+	converter func(*E) runtime.Structure, // Converts the raw context type into a `runtime.Structure` matching the `ctxType`.
 	opts ...Option[E]) TransformContext[E] {
 	contextFields := map[string]runtime.Type{}
 	for _, field := range ctxType.FieldNames() {
@@ -96,7 +96,7 @@ func (e TransformContext[E]) ResolveEnum(name string) (runtime.Val, bool) {
 }
 
 type valDrivenEvalContext struct {
-	source runtime.Val
+	source runtime.Structure
 }
 
 // Parent implements EvalContext.
@@ -110,7 +110,7 @@ func (v *valDrivenEvalContext) String() string {
 
 // ResolveName implements EvalContext.
 func (v *valDrivenEvalContext) ResolveName(name string) (runtime.Val, bool) {
-	r := v.source.(runtime.Structure).GetField(name)
+	r := v.source.GetField(name)
 	return r, r.Type() != stdlib.ErrorType
 }
 

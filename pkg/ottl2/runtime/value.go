@@ -25,18 +25,21 @@ type Var interface {
 
 // For values that support {name}[index]
 type Indexable interface {
+	Val
 	// Obtains a value at an index
 	GetIndex(index int64) Val
 }
 
 // For values that support {name}[key]
 type KeyIndexable interface {
+	Val
 	// Obtains a value at a key
 	GetKey(key string) Val
 }
 
 // For values that support {name}.{field}
 type Structure interface {
+	Val
 	// Obtains a field by its name
 	GetField(field string) Val
 }
