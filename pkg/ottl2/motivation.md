@@ -46,6 +46,20 @@ Briefly, these are:
 - Terms (names you reference from context) being hidden within getter/setter machinery, preventing static analysis.
 - Functions having access to context can prevent understanding whether an expression only uses Resource or requires access to Span  (`IsRootSpan()` is highly problematic here).   This prevents fixing [#29016](https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/29016)
 
+
+### Side-Note: Static Analysis
+
+To expand on the `IsRootSpan()` and static analysis comment, we want to, eventually, be able to infer properties about OTTL statements by looking at them *before* executing.  We can use this information to optimise execution of statements when loading configuration, and then keeping runtime performance of OTTL low.
+
+These include:
+
+- Does my condition need to be run at `resource`, `instrumentation_scope` or signal (`log`, `metric`, `span`, `spanevent` etc.) level?
+  - Compare `set(...) where IsRootSpan()` to `set(...) where IsRootSpan(span)`.  The second clearly access `span` context.
+  - Could we understand that a condition only checks resource but the editor affects a raw signal and run the condition once for that resource, and the editor across all the signals?
+- Are there literals of my syntax tree that could be "statically" optimised away?
+  - When seeing `append(attributes["foo"], values=[1,2,3])`, could I construct an array of `[1,2,3]` once, instead of continuously evaluating `[]Getter[K]`?
+  - Can I deal with trival math? Could I turn: `set(...,  x * 1000 * 1000)` into `set(..., x * 1000000)`?
+
 ## What can/should we improve?
 
 We need to give OTTL the right foundation so we can grow it over time to meet the needs of the ecosystem.  This includes:
@@ -53,7 +67,6 @@ We need to give OTTL the right foundation so we can grow it over time to meet th
   - Terms (context and paths available on context, e.g. `span.status`) should be known to the Parser.
   - Types can be ascribed to terms on context, and validated (e.g. preventing integer index to a map)
   - Expressions should be decomposible such that understanding if a condition needs access to a signal, scope or resource is something that can be statically determined.
-  - 
 
 ## Design
 
@@ -62,7 +75,7 @@ See the [design doc](design.md) for this rework.  However, to re-iterate key com
 - Three tiered approach to OTTL
   - Syntax Tree: existing grammar.go file. Raw syntax nodes parsed from OTTL statements.
   - Expression Tree: an *interactable* view of the syntax tree, with types resolved such that you can perform analyiss and optimisations.
-  -  Value/Runtime layer: An abstraction for evaluating OTTL expressions.  This lets us standardize type conversions, list&map expressions, etc.
+  - Runtime layer: An abstraction for evaluating OTTL expressions.  This lets us standardize type conversions, list & map expressions, etc.
 
 Within this new design:
 
@@ -114,3 +127,17 @@ When parsing an expression, you simply need a `map[string]Type` available to und
 When evaluating an expression, you simply need a `map[string]Val` available to manipulate values.
 
 OTTL would provide standard `Val` wrappers for all types needed in OTLP.
+
+## Function improvements
+
+We should anticipate the need for improvements to functions going forward.  Today, OTTL supports the following features:
+
+- Named Parameters
+- Optional & Default Parameters (default is empty)
+
+Going forward, we should make it easier to support:
+
+- vararg parameters (e.g. `append(x, y...)`)
+- (possibly) lambda/first-class functions  (e.g. `replace_all_patterns(..., function=func(x) { return append(x, "_test")})`)
+
+Additionally, we could perform some type enforcement prior to executing `Getter[_]` behavior.
