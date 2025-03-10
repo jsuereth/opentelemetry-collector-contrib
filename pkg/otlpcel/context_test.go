@@ -41,6 +41,44 @@ func Test_celCompilation(t *testing.T) {
 				assert.Equal(t, "new-value", span.Name())
 			},
 		},
+		{
+			name: "test status message",
+			span: func() ptrace.Span {
+				s := ptrace.NewSpan()
+				s.SetName("test")
+				s.Status().SetMessage("status message")
+				return s
+			}(),
+			expression: `span.status.message`,
+			expect: func(t *testing.T, span ptrace.Span, out any) {
+				assert.Equal(t, "status message", out)
+			},
+		},
+		{
+			name: "test status code",
+			span: func() ptrace.Span {
+				s := ptrace.NewSpan()
+				s.SetName("test")
+				s.Status().SetCode(ptrace.StatusCodeError)
+				return s
+			}(),
+			expression: `span.status.code`,
+			expect: func(t *testing.T, span ptrace.Span, out any) {
+				assert.Equal(t, int64(ptrace.StatusCodeError), out)
+			},
+		},
+		{
+			name: "test attributes",
+			span: func() ptrace.Span {
+				s := ptrace.NewSpan()
+				s.Attributes().PutStr("test", "test value")
+				return s
+			}(),
+			expression: `span.attributes["test"].string`,
+			expect: func(t *testing.T, span ptrace.Span, out any) {
+				assert.Equal(t, "test value", out)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -4,24 +4,32 @@
 package otlpcel
 
 import (
+	"reflect"
+
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 func NewSpanEnv() (*cel.Env, error) {
+	pdataConverter := pdataTypeProvider{
+		structs: []StructTypeProvider{
+			PSpanType,
+			PTraceStatusType,
+			PValueType,
+		},
+	}
 	return cel.NewEnv(
-		cel.Types(PSpanType),
-		cel.Variable("span", PSpanType),
-		cel.CustomTypeProvider(&pdataTypeProvider{
-			structs: []StructTypeProvider{
-				testPSpanType,
-			},
-		}),
+		// TODO - pdataTypeProvidercan register types recursively if we're feeling lazy.
+		cel.CustomTypeProvider(&pdataConverter),
+		cel.CustomTypeAdapter(&pdataConverter),
+		cel.Variable("span", PSpanType.Type()),
+		// TOOD - can we infer this from our type provider as "setter"s?
 		cel.Function("SetName",
 			cel.MemberOverload("span_set_name",
-				[]*cel.Type{PSpanType, cel.StringType},
+				[]*cel.Type{PSpanType.Type(), cel.StringType},
 				cel.BoolType,
 				cel.BinaryBinding(func(lhs, rhs ref.Val) ref.Val {
 					name := rhs.Value().(string)
@@ -43,6 +51,32 @@ func NewSpanActivation(span ptrace.Span) (cel.Activation, error) {
 
 type pdataTypeProvider struct {
 	structs []StructTypeProvider
+}
+
+func internalNativeToValue(value any) ref.Val {
+	// TODO - register this.
+	switch resultType := value.(type) {
+	case ref.Val:
+		return resultType
+	case string:
+		return types.String(resultType)
+	case int64:
+		return types.Int(resultType)
+	case ptrace.Span:
+		return pspanWrapper(resultType)
+	case ptrace.StatusCode:
+		return types.Int(resultType)
+	case pcommon.Map:
+		return pmapWrapper(resultType)
+	case pcommon.Value:
+		return pvalueWrapper(resultType)
+	}
+	return types.NewErr("cannot convert type to ref.Val: '%v'", reflect.TypeOf(value))
+}
+
+// NativeToValue implements ref.TypeAdapter.
+func (p *pdataTypeProvider) NativeToValue(value any) ref.Val {
+	return internalNativeToValue(value)
 }
 
 // EnumValue implements types.Provider.

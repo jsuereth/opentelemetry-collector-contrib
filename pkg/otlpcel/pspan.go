@@ -6,44 +6,14 @@ package otlpcel
 import (
 	"reflect"
 
-	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
-var PSpanType *cel.Type = types.NewObjectType("ptrace.Span", traits.IndexerType)
-var spanFields = map[string]*types.FieldType{
-	"name": {
-		Type:  types.StringType,
-		IsSet: func(target any) bool { return true },
-		GetFrom: func(target any) (any, error) {
-			// TODO - cast and ereturn error
-			return target.(ptrace.Span).Name(), nil
-		},
-	},
-	"status": {
-		// TODO - status type.
-		Type:  types.IntType,
-		IsSet: func(target any) bool { return true },
-		GetFrom: func(target any) (any, error) {
-			return target.(ptrace.Span).Status(), nil
-		},
-	},
-	"attributes": {
-		// TODO pcommon.Map
-		Type: types.MapType,
-		IsSet: func(target any) bool {
-			return true
-		},
-		GetFrom: func(target any) (any, error) {
-			return target.(ptrace.Span).Attributes(), nil
-		},
-	},
-}
-
-var testPSpanType = NewStructType[ptrace.Span]("ptrace.Span",
+var PSpanType = NewStructType[ptrace.Span](
+	"ptrace.Span",
 	[]Field[ptrace.Span]{
 		{
 			Name:  "name",
@@ -53,6 +23,26 @@ var testPSpanType = NewStructType[ptrace.Span]("ptrace.Span",
 				return target.Name(), nil
 			},
 		},
+		{
+			Name: "status",
+			Type: PTraceStatusType.Type(),
+			IsSet: func(target ptrace.Span) bool {
+				return true
+			},
+			GetFrom: func(target ptrace.Span) (any, error) {
+				return target.Status(), nil
+			},
+		},
+		{
+			Name: "attributes",
+			Type: types.NewMapType(types.StringType, PValueType.Type()),
+			IsSet: func(target ptrace.Span) bool {
+				return target.Attributes().Len() != 0
+			},
+			GetFrom: func(target ptrace.Span) (any, error) {
+				return target.Attributes(), nil
+			},
+		},
 	},
 	func(m map[string]any) (ptrace.Span, error) {
 		panic("unimplemented")
@@ -60,6 +50,7 @@ var testPSpanType = NewStructType[ptrace.Span]("ptrace.Span",
 	func(s ptrace.Span) ref.Val {
 		panic("unimplemented")
 	},
+	traits.IndexerType,
 )
 
 type pspanWrapper ptrace.Span
@@ -81,7 +72,7 @@ func (p pspanWrapper) Equal(other ref.Val) ref.Val {
 
 // Type implements ref.Val.
 func (p pspanWrapper) Type() ref.Type {
-	return PSpanType
+	return PSpanType.Type()
 }
 
 // Value implements ref.Val.
