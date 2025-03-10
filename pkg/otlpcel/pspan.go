@@ -43,6 +43,25 @@ var spanFields = map[string]*types.FieldType{
 	},
 }
 
+var testPSpanType = NewStructType[ptrace.Span]("ptrace.Span",
+	[]Field[ptrace.Span]{
+		{
+			Name:  "name",
+			Type:  types.StringType,
+			IsSet: func(target ptrace.Span) bool { return true },
+			GetFrom: func(target ptrace.Span) (any, error) {
+				return target.Name(), nil
+			},
+		},
+	},
+	func(m map[string]any) (ptrace.Span, error) {
+		panic("unimplemented")
+	},
+	func(s ptrace.Span) ref.Val {
+		panic("unimplemented")
+	},
+)
+
 type pspanWrapper ptrace.Span
 
 // ConvertToNative implements ref.Val.
