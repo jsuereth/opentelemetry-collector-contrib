@@ -79,6 +79,42 @@ func Test_celCompilation(t *testing.T) {
 				assert.Equal(t, "test value", out)
 			},
 		},
+		{
+			name: "test attributes int",
+			span: func() ptrace.Span {
+				s := ptrace.NewSpan()
+				s.Attributes().PutInt("test", 20)
+				return s
+			}(),
+			expression: `span.attributes["test"].int > 10`,
+			expect: func(t *testing.T, span ptrace.Span, out any) {
+				assert.Equal(t, true, out)
+			},
+		},
+		{
+			name: "test attributes double",
+			span: func() ptrace.Span {
+				s := ptrace.NewSpan()
+				s.Attributes().PutDouble("tested", 15.34)
+				return s
+			}(),
+			expression: `span.attributes["tested"].double <= 1.34`,
+			expect: func(t *testing.T, span ptrace.Span, out any) {
+				assert.Equal(t, false, out)
+			},
+		},
+		{
+			name: "test attributes bool",
+			span: func() ptrace.Span {
+				s := ptrace.NewSpan()
+				s.Attributes().PutBool("tested", true)
+				return s
+			}(),
+			expression: `span.attributes["tested"].bool`,
+			expect: func(t *testing.T, span ptrace.Span, out any) {
+				assert.Equal(t, true, out)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

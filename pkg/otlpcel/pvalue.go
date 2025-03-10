@@ -56,7 +56,7 @@ var PValueType = NewStructType("pcommon.Value",
 		},
 		{
 			Name: "double",
-			Type: types.BoolType,
+			Type: types.DoubleType,
 			IsSet: func(target pcommon.Value) bool {
 				return target.Type() == pcommon.ValueTypeDouble
 			},
@@ -65,6 +65,36 @@ var PValueType = NewStructType("pcommon.Value",
 					return target.Double(), nil
 				}
 				return nil, fmt.Errorf("value is not an int: %s", target.Type().String())
+			},
+		},
+		{
+			Name: "list",
+			// Note: We have a recursive type here.
+			// Cel probably doesn't let us deal with this in any reaosnable way.
+			Type: types.ListType,
+			IsSet: func(target pcommon.Value) bool {
+				return target.Type() == pcommon.ValueTypeSlice
+			},
+			GetFrom: func(target pcommon.Value) (any, error) {
+				if target.Type() == pcommon.ValueTypeSlice || target.Type() == pcommon.ValueTypeEmpty {
+					return target.Slice(), nil
+				}
+				return nil, fmt.Errorf("value is not a list: %s", target.Type().String())
+			},
+		},
+		{
+			Name: "map",
+			// Note: We have a recursive type here.
+			// Cel probably doesn't let us deal with this in any reaosnable way.
+			Type: PMapType,
+			IsSet: func(target pcommon.Value) bool {
+				return target.Type() == pcommon.ValueTypeMap
+			},
+			GetFrom: func(target pcommon.Value) (any, error) {
+				if target.Type() == pcommon.ValueTypeSlice || target.Type() == pcommon.ValueTypeEmpty {
+					return target.Slice(), nil
+				}
+				return nil, fmt.Errorf("value is not a list: %s", target.Type().String())
 			},
 		},
 	},

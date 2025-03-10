@@ -58,10 +58,14 @@ func internalNativeToValue(value any) ref.Val {
 	switch resultType := value.(type) {
 	case ref.Val:
 		return resultType
+	case bool:
+		return types.Bool(resultType)
 	case string:
 		return types.String(resultType)
 	case int64:
 		return types.Int(resultType)
+	case float64:
+		return types.Double(resultType)
 	case ptrace.Span:
 		return pspanWrapper(resultType)
 	case ptrace.StatusCode:
